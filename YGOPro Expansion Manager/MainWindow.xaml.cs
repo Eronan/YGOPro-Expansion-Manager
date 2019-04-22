@@ -85,7 +85,7 @@ namespace YGOPro_Expansion_Manager
                 document.Load(LOCAL_METADATA);
 
                 //Get all Expansions in Directory Expansion
-                XmlElement elem = document.GetElementById(expName);
+                XmlNode elem = document.GetElementsByTagName(expName)[0];
                 foreach (XmlNode xmlNode in elem.ChildNodes)
                 {
                     if (xmlNode.Name == "local") includedExpansions.Add(xmlNode.InnerText);
@@ -272,6 +272,16 @@ namespace YGOPro_Expansion_Manager
             }
         }
 
+        private void ListBox_Local_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Space)
+            {
+                //Check Box
+                CheckBox checkSender = (CheckBox) ListBox_Local.SelectedItem;
+                checkSender.IsChecked = !checkSender.IsChecked;
+            }
+        }
+
         //Expansion is Selected
         private void ListBoxItem_Expansions_Selected(object sender, RoutedEventArgs e)
         {
@@ -298,28 +308,48 @@ namespace YGOPro_Expansion_Manager
         //Save
         private void CommandSave_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            Mouse.OverrideCursor = Cursors.Wait;
+            XmlDocument xmlDocument = new XmlDocument();
+            XmlElement root = xmlDocument.CreateElement("Metadata");
             foreach (ListBoxItem listItem in ListBox_Directory.Items)
             {
                 DirectoryExpansion directoryExpansion = (DirectoryExpansion)listItem.Tag;
                 //Region to be commented out when card-specifics are added
                 #region RemovableTableCreator
                 directoryExpansion.Clear();
+                XmlElement expansionElement = xmlDocument.CreateElement(directoryExpansion.Name);
+                root.AppendChild(expansionElement);
 
                 //
                 foreach (KeyValuePair<Expansion, bool> keyValuePair in directoryExpansion.ExpansionDictionary)
                 {
                     //Merge Tables
-                    if (keyValuePair.Value) directoryExpansion.Merge(keyValuePair.Key);
+                    if (keyValuePair.Value)
+                    {
+                        directoryExpansion.Merge(keyValuePair.Key);
+                        XmlElement addElement = xmlDocument.CreateElement("local");
+                        addElement.InnerText = keyValuePair.Key.Name;
+                        expansionElement.AppendChild(addElement);
+                    }
                 }
+
+                xmlDocument.AppendChild(root);
+                xmlDocument.Save(LOCAL_METADATA);
                 #endregion
 
+                //Merge Zip File
+
+
+                //DataBase
                 string filePath = Properties.Settings.Default.Path + "\\" + directoryExpansion.Name + ".cdb";
                 if (!File.Exists(filePath)) continue;
                 using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath))
                 {
+                    sqlConn.Open();
+
                     //Delete all Data from Tables
-                    SQLiteCommand sqlCmd_data_delete = new SQLiteCommand("DELETE * FROM datas", sqlConn);
-                    SQLiteCommand sqlCmd_text_delete = new SQLiteCommand("DELETE * FROM datas", sqlConn);
+                    SQLiteCommand sqlCmd_data_delete = new SQLiteCommand("DELETE FROM datas", sqlConn);
+                    SQLiteCommand sqlCmd_text_delete = new SQLiteCommand("DELETE FROM texts", sqlConn);
                     sqlCmd_data_delete.ExecuteNonQuery();
                     sqlCmd_text_delete.ExecuteNonQuery();
 
@@ -333,7 +363,7 @@ namespace YGOPro_Expansion_Manager
                         //Insert Data
                         SQLiteCommand sqlCmd_data_insert = new SQLiteCommand("INSERT INTO datas " +
                             "VALUES (@id, @ot, @alias, @setcode, @type, @atk, @def, @level, @race, " +
-                            "@attribute, @category)");
+                            "@attribute, @category)", sqlConn);
                         sqlCmd_data_insert.Parameters.Add("@id", DbType.Int64).Value = dataRow["id"];
                         sqlCmd_data_insert.Parameters.Add("@ot", DbType.Int32).Value = dataRow["ot"];
                         sqlCmd_data_insert.Parameters.Add("@alias", DbType.Int64).Value = dataRow["alias"];
@@ -354,11 +384,11 @@ namespace YGOPro_Expansion_Manager
                         DataRow textRow = directoryExpansion.Text.Rows[i];
                         SQLiteCommand sqlCmd_text_insert = new SQLiteCommand("INSERT INTO texts " +
                             "VALUES (@id, @name, @desc, @str1, @str2, @str3, @str4, @str5, @str6, " +
-                            "@str7, @str8, @str9, @str10, @str11, @str12, @str13, @str14, @str15, @str16)");
+                            "@str7, @str8, @str9, @str10, @str11, @str12, @str13, @str14, @str15, @str16)", sqlConn);
                         sqlCmd_text_insert.Parameters.Add("@id", DbType.Int64).Value = textRow["id"];
                         sqlCmd_text_insert.Parameters.Add("@name", DbType.String).Value = textRow["name"];
                         sqlCmd_text_insert.Parameters.Add("@desc", DbType.String).Value = textRow["desc"];
-                        for (int j = 0; i <= 16; j++)
+                        for (int j = 1; j <= 16; j++)
                         {
                             //Add all String Parameters
                             sqlCmd_text_insert.Parameters.Add("@str" + j, DbType.String).Value = textRow["str" + j];
@@ -372,6 +402,7 @@ namespace YGOPro_Expansion_Manager
                     sqlConn.Close();
                 }
             }
+            Mouse.OverrideCursor = null;
         }
 
         //Get Directory
