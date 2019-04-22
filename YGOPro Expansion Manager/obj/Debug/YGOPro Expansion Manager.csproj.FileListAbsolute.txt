@@ -1,0 +1,27 @@
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\YGOPro Expansion Manager.exe.config
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\YGOPro Expansion Manager.exe
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\YGOPro Expansion Manager.pdb
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.csprojAssemblyReference.cache
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\MainWindow.g.cs
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\App.g.cs
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager_MarkupCompile.cache
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager_MarkupCompile.lref
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\MainWindow.baml
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.g.resources
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro_Expansion_Manager.Properties.Resources.resources
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.csproj.GenerateResource.cache
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.csproj.CoreCompileInputs.cache
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.exe
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.pdb
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\EntityFramework.dll
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\EntityFramework.SqlServer.dll
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\System.Data.SQLite.dll
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\System.Data.SQLite.EF6.dll
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\System.Data.SQLite.Linq.dll
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\EntityFramework.xml
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\EntityFramework.SqlServer.xml
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\System.Data.SQLite.xml
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\System.Data.SQLite.dll.config
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\InputBox.g.cs
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\InputBox.baml
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.csproj.CopyComplete
