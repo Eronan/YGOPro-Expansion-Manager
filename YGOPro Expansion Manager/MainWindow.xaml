@@ -5,10 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:YGOPro_Expansion_Manager"
         mc:Ignorable="d"
-        Title="MainWindow" Height="461" Width="798" MinWidth="798" MinHeight="461">
+        Title="MainWindow" Height="480.2" Width="798" MinWidth="798" MinHeight="461">
     <Window.CommandBindings>
-        <CommandBinding Command="Open" />
-        <CommandBinding Command="Save" />
+        <CommandBinding x:Name="CommandNew" Command="New" Executed="CommandNew_Executed"/>
+        <CommandBinding x:Name="CommandOpen" Command="Open" Executed="CommandOpen_Executed"/>
+        <CommandBinding Command="Save" Executed="CommandSave_Executed"/>
     </Window.CommandBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -26,23 +27,24 @@
         </Grid.LayoutTransform>
         <Menu HorizontalAlignment="Left" Height="19" Margin="0,-1,0,0" VerticalAlignment="Top" Width="784" Grid.ColumnSpan="4">
             <MenuItem Header="_File">
+                <MenuItem Header="_New Database" Command="New" InputGestureText="Ctrl+N"/>
                 <MenuItem Header="_Open Directory" Command="Open" InputGestureText="Ctrl+O"/>
                 <MenuItem Header="_Save Databases" Command="Save" InputGestureText="Ctrl+S"/>
             </MenuItem>
             <MenuItem Header="_Preferences"/>
             <MenuItem Header="_About"/>
         </Menu>
-        <Label Content="YGOPRO Expansions" Margin="0,19,4,375" Grid.RowSpan="2" Height="25.6" MinHeight="25.6"/>
-        <ListBox x:Name="ListBox_Directory" Margin="10,30.8,9.6,44.2" Grid.Column="0" Grid.Row="1"/>
-        <Label Content="Card in Local Expansion" Margin="3.8,19,0.2,375" Grid.Column="2" Grid.RowSpan="2" Height="25.6" MinHeight="25.6"/>
-        <ListBox x:Name="ListBox_Local" Margin="10.4,30.8,10.2,21.2" Grid.Row="1" Grid.Column="1"/>
-        <Button x:Name="Button_NewFile" Content="New File" Grid.Column="0" Margin="10,379.8,105.6,13.2" Grid.Row="1" MinHeight="19.2" Height="19.2" Click="Button_NewFile_Click" RenderTransformOrigin="-0.314,0.354"/>
-        <Button x:Name="Button_DeleteFile" Content="Delete File" Grid.Column="0" Margin="105,379.8,9.6,13.2" Grid.Row="1" MinHeight="19.2" Height="19.2"/>
-        <ListBox x:Name="ListBox_Cards" Grid.Column="2" Margin="11.8,30.8,11,21.2" Grid.Row="1" Width="150" IsEnabled="False"/>
-        <Label Content="Local Expansion" Margin="0,18,1.2,376" Grid.RowSpan="2" Grid.Column="1" MinHeight="25.6" Height="25.6"/>
+        <Label Content="YGOPRO Expansions" Margin="-1,3.8,4.6,401.4" Height="25.6" MinHeight="25.6" Grid.Row="1" VerticalAlignment="Top"/>
+        <ListBox x:Name="ListBox_Directory" Margin="10,30.8,9.6,0" Grid.Column="0" Grid.Row="1" VerticalAlignment="Top" Height="356" KeyUp="ListBox_Directory_KeyUp"/>
+        <Label Content="Card in Local Expansion" Margin="3.8,4.8,0,400.4" Grid.Column="2" Height="25.6" MinHeight="25.6" Grid.Row="1" VerticalAlignment="Top"/>
+        <ListBox x:Name="ListBox_Local" Margin="10.4,30.8,10.2,10.4" Grid.Row="1" Grid.Column="1"/>
+        <Button x:Name="Button_NewFile" Content="New File" Grid.Column="0" Margin="10,0,0,10.4" Grid.Row="1" MinHeight="19.2" Height="19" Click="Button_NewFile_Click" RenderTransformOrigin="-0.314,0.354" VerticalAlignment="Bottom" Panel.ZIndex="1" HorizontalAlignment="Left" Width="86"/>
+        <Button x:Name="Button_DeleteFile" Content="Delete File" Grid.Column="0" Margin="0,0,9.6,10.4" Grid.Row="1" MinHeight="19.2" Height="19" RenderTransformOrigin="0.496,-0.49" VerticalAlignment="Bottom" Panel.ZIndex="1" HorizontalAlignment="Right" Width="86" Click="Button_DeleteFile_Click"/>
+        <ListBox x:Name="ListBox_Cards" Grid.Column="2" Margin="10,30.8,10,10.4" Grid.Row="1" IsEnabled="False"/>
+        <Label Content="Local Expansion" Margin="0.4,3.8,1.2,401.4" Grid.Column="1" MinHeight="25.6" Height="25.6" Grid.Row="1" VerticalAlignment="Top"/>
         <Border Background="#FFF1F1F1" Grid.Column="3" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,9.8,0,0" CornerRadius="3">
             <Image Grid.Column="3"  Width="100" Height="143" Grid.Row="1" IsEnabled="False"/>
         </Border>
-        <TextBox Grid.Column="3" Margin="10,157.8,10,21.2" Grid.Row="1" TextWrapping="Wrap" IsReadOnly="True" IsEnabled="False"/>
+        <TextBox Grid.Column="3" Margin="10,157.8,10,10.4" Grid.Row="1" TextWrapping="Wrap" IsReadOnly="True" IsEnabled="False"/>
     </Grid>
 </Window>

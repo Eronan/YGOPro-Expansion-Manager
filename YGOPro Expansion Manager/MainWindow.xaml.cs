@@ -31,6 +31,9 @@ namespace YGOPro_Expansion_Manager
         public const string LOCAL_EXPANSIONS = @".\expansions";
         public const string LOCAL_METADATA = "metadata.xml";
         #endregion
+        #region Variables
+        bool handleChecked = false;
+        #endregion
 
         public MainWindow()
         {
@@ -45,6 +48,7 @@ namespace YGOPro_Expansion_Manager
             //State Checking
         }
 
+        #region Loading Procedures
         private void LoadLocal()
         {
             ItemCollection localExpansions = ListBox_Local.Items;
@@ -60,6 +64,8 @@ namespace YGOPro_Expansion_Manager
                 CheckBox newBoxItem = new CheckBox();
                 newBoxItem.Content = fileName;
                 newBoxItem.Tag = newExpansion;
+                newBoxItem.Checked += CheckBox_Expansions_Checked;
+                newBoxItem.Unchecked += CheckBox_Expansions_Checked;
                 //newBoxItem.IsThreeState = true;
 
                 //Add CheckBox to ListBox
@@ -74,10 +80,11 @@ namespace YGOPro_Expansion_Manager
 
             try
             {
-
+                //Load Document
                 XmlDocument document = new XmlDocument();
                 document.Load(LOCAL_METADATA);
 
+                //Get all Expansions in Directory Expansion
                 XmlElement elem = document.GetElementById(expName);
                 foreach (XmlNode xmlNode in elem.ChildNodes)
                 {
@@ -95,13 +102,13 @@ namespace YGOPro_Expansion_Manager
         //Load Data from Directory
         private void LoadMain()
         {
-            //Load XML File
-
             //Load Database Files
             ItemCollection mainExpansions = ListBox_Directory.Items;
             foreach (string dbPath in Directory.GetFiles(Properties.Settings.Default.Path, "*.cdb"))
             {
                 string fileName = Path.GetFileNameWithoutExtension(dbPath);
+
+                if (fileName == "cards-tf") continue;
 
                 //Load Database
                 DataSet expansionSet = LoadDatabase(dbPath);
@@ -109,71 +116,54 @@ namespace YGOPro_Expansion_Manager
                 //Create Expansion Set
                 DirectoryExpansion newExpansion = new DirectoryExpansion(fileName, expansionSet, ListBox_Local.Items, LoadMetaData(fileName));
                 ListBoxItem newBoxItem = new ListBoxItem();
-                newBoxItem.Content = newExpansion;
+                newBoxItem.Content = fileName;
                 newBoxItem.Tag = newExpansion;
-
+                newBoxItem.Selected += ListBoxItem_Expansions_Selected;
                 //Add Item to the ListBox
                 mainExpansions.Add(newBoxItem);
             }
-        }
 
-        //Set Expansions Folder Path
-        private string SetExpansionsPath()
-        {
-            //Start Folder Browser Dialog
-            using (var directoryDialog = new WinForms.FolderBrowserDialog())
-            {
-                directoryDialog.Description = "Please select the YGOPro expansions folder.";
-
-                if (directoryDialog.ShowDialog() == WinForms.DialogResult.OK)
-                {
-                    Properties.Settings.Default.Path = directoryDialog.SelectedPath;
-                    Properties.Settings.Default.Save();
-                }
-            }
-
-            //Return Path
-            return Properties.Settings.Default.Path;
+            //Set SelectedIndex to 0
+            if (mainExpansions.Count > 0) ListBox_Directory.SelectedIndex = 0;
         }
 
         //Load Database
         private DataSet LoadDatabase(string dbPath)
         {
             DataSet dataSet;
+            //Set up Connection
             using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + dbPath))
             {
+                sqlConn.Open();
                 dataSet = LoadDatabase(sqlConn);
             }
 
+            //Return Information
             return dataSet;
         }
 
         private DataSet LoadDatabase(SQLiteConnection sqlConn)
         {
             DataSet dataSet = new DataSet();
-            try
-            {
-                sqlConn.Open();
-                //Read from 'data' table
-                SQLiteCommand sqlCmd = new SQLiteCommand("Select * from data", sqlConn);
-                SQLiteDataAdapter sqlAdapter = new SQLiteDataAdapter(sqlCmd);
-                sqlAdapter.Fill(dataSet, "data");
+            
+            //Read from 'data' table
+            SQLiteCommand sqlCmd = new SQLiteCommand("Select * from datas", sqlConn);
+            SQLiteDataAdapter sqlAdapter = new SQLiteDataAdapter(sqlCmd);
+            sqlAdapter.Fill(dataSet, "datas");
 
-                //Read from 'text' table
-                sqlAdapter.SelectCommand.CommandText = "Select * from texts";
-                sqlAdapter.Fill(dataSet, "texts");
+            //Read from 'text' table
+            sqlAdapter.SelectCommand.CommandText = "Select * from texts";
+            sqlAdapter.Fill(dataSet, "texts");
 
-                sqlAdapter.Dispose();
-                sqlCmd.Dispose();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            sqlAdapter.Dispose();
+            sqlCmd.Dispose();
 
             return dataSet;
         }
+        #endregion
 
+        #region ControlEvents
+        //New Database
         private void Button_NewFile_Click(object sender, RoutedEventArgs e)
         {
             InputBox inputBox = new InputBox("What do you want to name the database?");
@@ -214,9 +204,201 @@ namespace YGOPro_Expansion_Manager
                         newBoxItem.Content = fileName;
                         newBoxItem.Tag = new DirectoryExpansion(fileName, LoadDatabase(sqlConn), ListBox_Local.Items, new List<string>());
                         ListBox_Directory.Items.Add(newBoxItem);
+
+                        //Dispose
+                        sqlCmd_Data.Dispose();
+                        sqlCmd_Text.Dispose();
+                        sqlConn.Close();
                     }
                 }
             }
         }
+
+        //Delete Database
+        private void Button_DeleteFile_Click(object sender, RoutedEventArgs e)
+        {
+            //Confirm Deletion
+            if (MessageBox.Show("Are you sure you want to delete this file?", "Delete", MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            {
+                //Get Selected Item
+                ListBoxItem selectedItem = (ListBoxItem)ListBox_Directory.SelectedItem;
+                if (selectedItem != null)
+                {
+                    DirectoryExpansion selectedExpansion = (DirectoryExpansion)selectedItem.Tag;
+                    string filePath = Properties.Settings.Default.Path + "\\" + selectedItem.Content + ".cdb";
+                    //Delete File
+                    if (File.Exists(filePath)) File.Delete(filePath);
+
+                    //Dispose Variables
+                    selectedExpansion.Dispose();
+
+                    //Remove from ListBox
+                    ListBox_Directory.Items.Remove(selectedItem);
+                }
+            }
+        }
+
+        //Delete
+        private void ListBox_Directory_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Delete)
+            {
+                //Delete Database
+                Button_DeleteFile_Click(sender, e);
+            }
+        }
+
+        //CheckBox is Checked
+        private void CheckBox_Expansions_Checked(object sender, RoutedEventArgs e)
+        {
+            if (handleChecked) return;
+
+            CheckBox checkBoxSender = (CheckBox)sender;
+            Expansion checkBoxTag = (Expansion)checkBoxSender.Tag;
+            //Get Selected Main Directory Expansion
+            ListBoxItem selectedExpansion = (ListBoxItem) ListBox_Directory.SelectedItem;
+            if (selectedExpansion != null)
+            {
+                //Set New Value for Key
+                DirectoryExpansion directoryExpansion = (DirectoryExpansion) selectedExpansion.Tag;
+                directoryExpansion.ExpansionDictionary[checkBoxTag] = (checkBoxSender.IsChecked == true);
+
+                //Merge/Remove Tables
+                /*//To be re-added when adding in card specific choices
+                if (checkBoxSender.IsChecked == true) directoryExpansion.Merge(checkBoxTag);
+                else directoryExpansion.Delete(checkBoxTag.Data.Rows);
+                */
+            }
+        }
+
+        //Expansion is Selected
+        private void ListBoxItem_Expansions_Selected(object sender, RoutedEventArgs e)
+        {
+            ListBoxItem selectedItem = (ListBoxItem) sender;
+            DirectoryExpansion directoryExpansion = (DirectoryExpansion) selectedItem.Tag;
+            handleChecked = true;
+            foreach (CheckBox checkBox in ListBox_Local.Items)
+            {
+                Expansion checkBoxExpansion = (Expansion) checkBox.Tag;
+                checkBox.IsChecked = directoryExpansion.ExpansionDictionary[checkBoxExpansion];
+            }
+            handleChecked = false;
+        }
+        #endregion
+
+        #region Commands
+        //Create New Database Command
+        private void CommandNew_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            //Press Button
+            Button_NewFile_Click(sender, e);
+        }
+
+        //Save
+        private void CommandSave_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            foreach (ListBoxItem listItem in ListBox_Directory.Items)
+            {
+                DirectoryExpansion directoryExpansion = (DirectoryExpansion)listItem.Tag;
+                //Region to be commented out when card-specifics are added
+                #region RemovableTableCreator
+                directoryExpansion.Clear();
+
+                //
+                foreach (KeyValuePair<Expansion, bool> keyValuePair in directoryExpansion.ExpansionDictionary)
+                {
+                    //Merge Tables
+                    if (keyValuePair.Value) directoryExpansion.Merge(keyValuePair.Key);
+                }
+                #endregion
+
+                string filePath = Properties.Settings.Default.Path + "\\" + directoryExpansion.Name + ".cdb";
+                if (!File.Exists(filePath)) continue;
+                using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath))
+                {
+                    //Delete all Data from Tables
+                    SQLiteCommand sqlCmd_data_delete = new SQLiteCommand("DELETE * FROM datas", sqlConn);
+                    SQLiteCommand sqlCmd_text_delete = new SQLiteCommand("DELETE * FROM datas", sqlConn);
+                    sqlCmd_data_delete.ExecuteNonQuery();
+                    sqlCmd_text_delete.ExecuteNonQuery();
+
+                    //Dispose of Commands
+                    sqlCmd_data_delete.Dispose();
+                    sqlCmd_text_delete.Dispose();
+                    //Insert Command
+                    for (int i = 0; i < directoryExpansion.RowCount; i++)
+                    {
+                        DataRow dataRow = directoryExpansion.Data.Rows[i];
+                        //Insert Data
+                        SQLiteCommand sqlCmd_data_insert = new SQLiteCommand("INSERT INTO datas " +
+                            "VALUES (@id, @ot, @alias, @setcode, @type, @atk, @def, @level, @race, " +
+                            "@attribute, @category)");
+                        sqlCmd_data_insert.Parameters.Add("@id", DbType.Int64).Value = dataRow["id"];
+                        sqlCmd_data_insert.Parameters.Add("@ot", DbType.Int32).Value = dataRow["ot"];
+                        sqlCmd_data_insert.Parameters.Add("@alias", DbType.Int64).Value = dataRow["alias"];
+                        sqlCmd_data_insert.Parameters.Add("@setcode", DbType.Int64).Value = dataRow["setcode"];
+                        sqlCmd_data_insert.Parameters.Add("@type", DbType.Int64).Value = dataRow["type"];
+                        sqlCmd_data_insert.Parameters.Add("@atk", DbType.Int64).Value = dataRow["atk"];
+                        sqlCmd_data_insert.Parameters.Add("@def", DbType.Int64).Value = dataRow["def"];
+                        sqlCmd_data_insert.Parameters.Add("@level", DbType.Int64).Value = dataRow["level"];
+                        sqlCmd_data_insert.Parameters.Add("@race", DbType.Int64).Value = dataRow["race"];
+                        sqlCmd_data_insert.Parameters.Add("@attribute", DbType.Int64).Value = dataRow["attribute"];
+                        sqlCmd_data_insert.Parameters.Add("@category", DbType.Int64).Value = dataRow["category"];
+
+                        //Execute Data Insert
+                        sqlCmd_data_insert.ExecuteNonQuery();
+                        sqlCmd_data_insert.Dispose();
+
+                        //Insert Texts
+                        DataRow textRow = directoryExpansion.Text.Rows[i];
+                        SQLiteCommand sqlCmd_text_insert = new SQLiteCommand("INSERT INTO texts " +
+                            "VALUES (@id, @name, @desc, @str1, @str2, @str3, @str4, @str5, @str6, " +
+                            "@str7, @str8, @str9, @str10, @str11, @str12, @str13, @str14, @str15, @str16)");
+                        sqlCmd_text_insert.Parameters.Add("@id", DbType.Int64).Value = textRow["id"];
+                        sqlCmd_text_insert.Parameters.Add("@name", DbType.String).Value = textRow["name"];
+                        sqlCmd_text_insert.Parameters.Add("@desc", DbType.String).Value = textRow["desc"];
+                        for (int j = 0; i <= 16; j++)
+                        {
+                            //Add all String Parameters
+                            sqlCmd_text_insert.Parameters.Add("@str" + j, DbType.String).Value = textRow["str" + j];
+                        }
+
+                        sqlCmd_text_insert.ExecuteNonQuery();
+                        sqlCmd_text_insert.Dispose();
+                    }
+
+                    //Close Connection
+                    sqlConn.Close();
+                }
+            }
+        }
+
+        //Get Directory
+        private void CommandOpen_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            SetExpansionsPath();
+        }
+        #endregion
+
+        //Set Expansions Folder Path
+        private string SetExpansionsPath()
+        {
+            //Start Folder Browser Dialog
+            using (var directoryDialog = new WinForms.FolderBrowserDialog())
+            {
+                directoryDialog.Description = "Please select the YGOPro expansions folder.";
+
+                if (directoryDialog.ShowDialog() == WinForms.DialogResult.OK)
+                {
+                    Properties.Settings.Default.Path = directoryDialog.SelectedPath;
+                    Properties.Settings.Default.Save();
+                }
+            }
+
+            //Return Path
+            return Properties.Settings.Default.Path;
+        }
+
     }
 }

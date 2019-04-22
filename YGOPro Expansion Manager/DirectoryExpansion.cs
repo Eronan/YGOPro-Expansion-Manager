@@ -28,5 +28,16 @@ namespace YGOPro_Expansion_Manager
             }
         }
 
+        public Dictionary<Expansion, bool> ExpansionDictionary
+        {
+            get { return checked_expansions; }
+            set { checked_expansions = value; }
+        }
+
+        public void Dispose()
+        {
+            if (base.Data != null) base.Data.Dispose();
+            if (base.Text != null) base.Text.Dispose();
+        }
     }
 }

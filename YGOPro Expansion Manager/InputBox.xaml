@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:YGOPro_Expansion_Manager"
         mc:Ignorable="d"
         Title="InputBox" Height="131.2" Width="800">
-    <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+          FocusManager.FocusedElement="{Binding ElementName=TextBox_Input}">
         <Label x:Name="Label_Prompt" Content="Prompt" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0" Width="774"/>
         <TextBox x:Name="TextBox_Input" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Width="774" Margin="10,41,0,0" KeyUp="TextBox_Input_KeyUp" />
         <Button x:Name="Button_OK" Content="OK" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="310,69,0,0" Click="Button_OK_Click"/>
