@@ -314,36 +314,62 @@ namespace YGOPro_Expansion_Manager
             foreach (ListBoxItem listItem in ListBox_Directory.Items)
             {
                 DirectoryExpansion directoryExpansion = (DirectoryExpansion)listItem.Tag;
-                //Region to be commented out when card-specifics are added
+                string filePath = Properties.Settings.Default.Path + "\\" + directoryExpansion.Name;
+                //Remove Data Merging
                 #region RemovableTableCreator
                 directoryExpansion.Clear();
                 XmlElement expansionElement = xmlDocument.CreateElement(directoryExpansion.Name);
                 root.AppendChild(expansionElement);
 
                 //
-                foreach (KeyValuePair<Expansion, bool> keyValuePair in directoryExpansion.ExpansionDictionary)
+                using (FileStream zipStream = new FileStream(filePath + ".zip", FileMode.Create))
                 {
-                    //Merge Tables
-                    if (keyValuePair.Value)
+                    using (ZipArchive directoryZip = new ZipArchive(zipStream, ZipArchiveMode.Update))
                     {
-                        directoryExpansion.Merge(keyValuePair.Key);
-                        XmlElement addElement = xmlDocument.CreateElement("local");
-                        addElement.InnerText = keyValuePair.Key.Name;
-                        expansionElement.AppendChild(addElement);
-                    }
-                }
+                        foreach (KeyValuePair<Expansion, bool> keyValuePair in directoryExpansion.ExpansionDictionary)
+                        {
+                            //Skip if no checked
+                            if (!keyValuePair.Value) continue;
+                            //Merge Tables if local is checked
+                            string localPath = LOCAL_EXPANSIONS + @"\" + keyValuePair.Key.Name + ".zip";
+                            using (FileStream localStream = new FileStream(localPath, FileMode.Open))
+                            {
+                                using (ZipArchive localZip = new ZipArchive(localStream, ZipArchiveMode.Read))
+                                {
+                                    foreach (ZipArchiveEntry entry in localZip.Entries)
+                                    {
+                                        Stream mainStream = directoryZip.CreateEntry(entry.FullName).Open();
+                                        Stream tempStream = entry.Open();
+                                        tempStream.CopyTo(mainStream);
+                                        mainStream.Close();
+                                        tempStream.Close();
+                                    }
 
+                                    //Garbage Collection
+                                    localZip.Dispose();
+                                }
+
+                                //Close
+                                localStream.Close();
+                            }
+
+                            //Create Metadata
+                            directoryExpansion.Merge(keyValuePair.Key);
+                            XmlElement addElement = xmlDocument.CreateElement("local");
+                            addElement.InnerText = keyValuePair.Key.Name;
+                            expansionElement.AppendChild(addElement);
+                        }
+                    }
+
+                    zipStream.Close();
+                }
                 xmlDocument.AppendChild(root);
                 xmlDocument.Save(LOCAL_METADATA);
                 #endregion
 
-                //Merge Zip File
-
-
                 //DataBase
-                string filePath = Properties.Settings.Default.Path + "\\" + directoryExpansion.Name + ".cdb";
-                if (!File.Exists(filePath)) continue;
-                using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath))
+                if (!File.Exists(filePath + ".cdb")) continue;
+                using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ".cdb"))
                 {
                     sqlConn.Open();
 
