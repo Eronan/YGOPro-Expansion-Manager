@@ -51,6 +51,13 @@ namespace YGOPro_Expansion_Manager
         #region Loading Procedures
         private void LoadLocal()
         {
+            //Create Local Expansion Folder
+            if (!Directory.Exists(LOCAL_EXPANSIONS))
+            {
+                Directory.CreateDirectory(LOCAL_EXPANSIONS);
+                return;
+            }
+
             ItemCollection localExpansions = ListBox_Local.Items;
             foreach (string dbPath in Directory.GetFiles(LOCAL_EXPANSIONS, "*.cdb"))
             {
@@ -86,6 +93,8 @@ namespace YGOPro_Expansion_Manager
 
                 //Get all Expansions in Directory Expansion
                 XmlNode elem = document.GetElementsByTagName(expName)[0];
+                //Return if nothing exists
+                if (elem == null) return new List<string>();
                 foreach (XmlNode xmlNode in elem.ChildNodes)
                 {
                     if (xmlNode.Name == "local") includedExpansions.Add(xmlNode.InnerText);
@@ -203,6 +212,7 @@ namespace YGOPro_Expansion_Manager
                         ListBoxItem newBoxItem = new ListBoxItem();
                         newBoxItem.Content = fileName;
                         newBoxItem.Tag = new DirectoryExpansion(fileName, LoadDatabase(sqlConn), ListBox_Local.Items, new List<string>());
+                        newBoxItem.Selected += ListBoxItem_Expansions_Selected;
                         ListBox_Directory.Items.Add(newBoxItem);
 
                         //Dispose

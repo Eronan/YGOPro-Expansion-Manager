@@ -25,3 +25,5 @@ D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Man
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\InputBox.g.cs
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\InputBox.baml
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.csproj.CopyComplete
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\TransferWindow.g.cs
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\TransferWindow.baml
