@@ -6,6 +6,11 @@
         xmlns:local="clr-namespace:YGOPro_Expansion_Manager"
         mc:Ignorable="d"
         Title="TransferWindow" Height="489.233" Width="800">
+    <Window.CommandBindings>
+        <CommandBinding x:Name="Command_Create" Command="New" Executed="Command_Create_Executed"/>
+        <CommandBinding x:Name="Command_Open" Command="Open" Executed="Command_Open_Executed"/>
+        <CommandBinding x:Name="Command_Save" Command="Save" Executed="Command_Save_Executed"/>
+    </Window.CommandBindings>
     <Grid RenderTransformOrigin="0.5,0.5">
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
@@ -19,16 +24,16 @@
         </Grid.ColumnDefinitions>
         <Label Grid.Column="0" Content="Transfer To:" Margin="10,9.2,0,400" HorizontalAlignment="Left" Width="70" Grid.Row="1"/>
         <Label Margin="0,10.2,9.4,399" Grid.Column="0" HorizontalContentAlignment="Right" HorizontalAlignment="Right" Width="115" Grid.Row="1" Content="*.cdb"/>
-        <Button Content="Open" Margin="10,41.2,0,0" Grid.Row="1" Height="19" VerticalAlignment="Top" HorizontalAlignment="Left" Width="60"/>
-        <Button Content="Create" Margin="75,41.2,75.4,0" Grid.Row="1" Height="19" VerticalAlignment="Top"/>
-        <Button Content="Save" Margin="0,41.2,9.4,0" Grid.Row="1" Height="19" VerticalAlignment="Top" HorizontalAlignment="Right" Width="60"/>
+        <Button Content="Open" Margin="10,41.2,0,0" Grid.Row="1" Height="19" VerticalAlignment="Top" HorizontalAlignment="Left" Width="60" Command="Save"/>
+        <Button Content="Create" Margin="75,41.2,75.4,0" Grid.Row="1" Height="19" VerticalAlignment="Top" Command="New"/>
+        <Button Content="Save" Margin="0,41.2,9.4,0" Grid.Row="1" Height="19" VerticalAlignment="Top" HorizontalAlignment="Right" Width="60" Command="Save"/>
         <TextBox Height="23" Margin="10,65.2,9.4,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Text="Name"/>
         <TextBox Height="23" Margin="10,93.2,9.4,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Text="Code"/>
         <ListBox Grid.Column="0" Margin="10,121.2,9.4,10" Grid.Row="1"/>
         <Button Content="◀ Transfer" Grid.Column="1" Margin="10.6,49.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"/>
         <Button Content="◀◀ Transfer All" Grid.Column="1" Margin="10.6,73.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"/>
         <Button Content="⌦ Cancel" Grid.Column="1" Margin="10.6,97.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"/>
-        <Button Content="🗙 Delete" Grid.Column="1" Margin="10.6,121.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top" Click="Button_Click"/>
+        <Button Content="🗙 Delete" Grid.Column="1" Margin="10.6,121.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"/>
         <Label Content="Transfer From:" Margin="10.4,9.2,0,400" Grid.Column="2" HorizontalAlignment="Left" Width="85" Grid.Row="1"/>
         <Label Content="*.cdb" Margin="0,9.2,5.2,400" Grid.Column="2" HorizontalContentAlignment="Right" HorizontalAlignment="Right" Width="101" Grid.Row="1"/>
         <TextBox Height="23" Margin="10.4,63.2,5.2,0" Grid.Row="1" Grid.Column="2" TextWrapping="Wrap" VerticalAlignment="Top" Text="Name"/>
@@ -40,7 +45,7 @@
         <TextBox Grid.Column="3" Margin="9.8,229.2,9.8,10" TextWrapping="Wrap" IsReadOnly="True" IsEnabled="False" Grid.Row="1"/>
         <Menu Grid.ColumnSpan="4" Margin="0,0,-0.4,435" Grid.RowSpan="2">
             <MenuItem Header="File">
-                <MenuItem Header="New Database"/>
+                <MenuItem Header="New Database" Command=""/>
                 <MenuItem Header="Open Database (To)"/>
                 <MenuItem Header="Load Database (From)"/>
             </MenuItem>
