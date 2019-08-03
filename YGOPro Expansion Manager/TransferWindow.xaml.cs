@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Data;
 using System.Data.SQLite;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,6 +23,10 @@ namespace YGOPro_Expansion_Manager
     /// </summary>
     public partial class TransferWindow : Window
     {
+        Expansion transferTo;
+        Expansion transferFrom;
+
+
         public TransferWindow()
         {
             InitializeComponent();
@@ -54,6 +59,10 @@ namespace YGOPro_Expansion_Manager
                         SQLiteCommand sqlCmd_Text = new SQLiteCommand(execSql_Text, sqlConn);
                         sqlCmd_Text.ExecuteNonQuery();
 
+                        //Create Expansion
+                        if (transferTo != null) transferTo.Dispose();
+                        transferTo = OpenDatabase(sqlConn, filePath);
+
                         //Dispose
                         sqlCmd_Data.Dispose();
                         sqlCmd_Text.Dispose();
@@ -61,16 +70,73 @@ namespace YGOPro_Expansion_Manager
                     }
                 }
             }
+
+            //Fill ListBox with items
         }
 
         private void Command_Open_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            using (WinForms.OpenFileDialog openDialog = new WinForms.OpenFileDialog())
+            {
+                if (openDialog.ShowDialog() == WinForms.DialogResult.OK)
+                {
+                    string filePath = openDialog.FileName;
 
+                    //Open Database
+                    using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
+                    {
+                        sqlConn.Open();
+
+                        //Create Expansion
+                        if (transferTo != null) transferTo.Dispose();
+                        transferTo = OpenDatabase(sqlConn, filePath);
+                    }
+                }
+            }
+
+            //Fill ListBox with items
+        }
+
+        private static Expansion OpenDatabase(SQLiteConnection sqlConn, string filePath)
+        {
+            DataSet expansionSet = new DataSet();
+
+            //Read from 'data' table
+            SQLiteCommand sqlCmd = new SQLiteCommand("Select * from datas", sqlConn);
+            SQLiteDataAdapter sqlAdapter = new SQLiteDataAdapter(sqlCmd);
+            sqlAdapter.Fill(expansionSet, "datas");
+
+            //Read from 'text' table
+            sqlAdapter.SelectCommand.CommandText = "Select * from texts";
+            sqlAdapter.Fill(expansionSet, "texts");
+
+            //Create new Expansion Class
+            Expansion Loaded = new Expansion(filePath, expansionSet);
+
+            sqlAdapter.Dispose();
+            sqlCmd.Dispose();
+
+            return Loaded;
+        }
+
+        private void FillListFrom()
+        {
+            //Fill ListBox based off of transferFrom
+        }
+
+        private void FillListTo()
+        {
+            //Fill ListBox based off of transferTo
         }
 
         private void Command_Save_Executed(object sender, ExecutedRoutedEventArgs e)
         {
 
+        }
+
+        private void Command_Load_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            //MessageBox.Show("This is the load function");
         }
     }
 }

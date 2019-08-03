@@ -111,6 +111,14 @@ namespace YGOPro_Expansion_Manager
             get { return Data.Rows.Count; }
         }
 
+        public void Dispose()
+        {
+            //Garbage Collection
+            Data.Dispose();
+            Text.Dispose();
+            name = null;
+        }
+
         public DataTable Data { get; set; }
         public DataTable Text { get; set; }
     }
