@@ -8,6 +8,53 @@
         Title="TransferWindow" Height="489.233" Width="800">
     <Window.Resources>
         <RoutedUICommand x:Key="Load" Text="Load" />
+        <DataTemplate x:Key="ListBoxTemplate" DataType="{x:Type local:CardItem}">
+            <Grid x:Name="BackgroundGrid" Margin="0, 2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="CardName" Text="{Binding Name}" />
+                <TextBlock x:Name="Code" Text="{Binding Code}" Grid.Column="1" TextAlignment="Right"/>
+                <CheckBox IsChecked="{Binding IsDeleted}" Visibility="Hidden" />
+                <CheckBox IsChecked="{Binding IsNew}" Visibility="Hidden" />
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDeleted}" Value="True" />
+                                    <Condition Binding="{Binding IsNew}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Background" Value="Yellow" />
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDeleted}" Value="False" />
+                                    <Condition Binding="{Binding IsNew}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Background" Value="Green" />
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDeleted}" Value="True" />
+                                    <Condition Binding="{Binding IsNew}" Value="False" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Background" Value="Red" />
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsDeleted}" Value="False" />
+                                    <Condition Binding="{Binding IsNew}" Value="False" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Background" Value="Transparent" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+            </Grid>
+        </DataTemplate>
     </Window.Resources>
     <Window.InputBindings>
         <KeyBinding Command="{StaticResource Load}" Key="L" Modifiers="Ctrl" />
@@ -18,9 +65,9 @@
         <CommandBinding x:Name="Command_Save" Command="Save" Executed="Command_Save_Executed"/>
         <CommandBinding x:Name="Command_Load" Command="{StaticResource Load}" Executed="Command_Load_Executed" />
     </Window.CommandBindings>
-    <Grid RenderTransformOrigin="0.5,0.5">
+    <Grid x:Name="MainWindowGrid" RenderTransformOrigin="0.5,0.5">
         <Grid.RowDefinitions>
-            <RowDefinition Height="25"/>
+            <RowDefinition Height="25" MaxHeight="25" MinHeight="25"/>
             <RowDefinition Height="532*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -29,28 +76,28 @@
             <ColumnDefinition Width="210*"/>
             <ColumnDefinition Width="258*"/>
         </Grid.ColumnDefinitions>
-        <Label Grid.Column="0" Content="Transfer To:" Margin="10,9.2,0,400" HorizontalAlignment="Left" Width="70" Grid.Row="1"/>
-        <Label Margin="0,10.2,9.4,399" Grid.Column="0" HorizontalContentAlignment="Right" HorizontalAlignment="Right" Width="115" Grid.Row="1" Content="*.cdb"/>
-        <Button Content="Open" Margin="10,41.2,0,0" Grid.Row="1" Height="19" VerticalAlignment="Top" HorizontalAlignment="Left" Width="60" Command="Save"/>
-        <Button Content="Create" Margin="75,41.2,75.4,0" Grid.Row="1" Height="19" VerticalAlignment="Top" Command="New"/>
-        <Button Content="Save" Margin="0,41.2,9.4,0" Grid.Row="1" Height="19" VerticalAlignment="Top" HorizontalAlignment="Right" Width="60" Command="Save"/>
+        <TextBlock Margin="10,9.2,0,400" Grid.Column="0" Text="Transfer To:" HorizontalAlignment="Left" Width="70" Grid.Row="1" TextWrapping="Wrap"/>
+        <TextBlock Margin="0,10.2,9.4,399" Grid.Column="0" Text="*.cdb" TextAlignment="Right" HorizontalAlignment="Right" Width="115" Grid.Row="1" TextWrapping="Wrap"/>
+        <Button Content="Open" Margin="10,41.2,0,0" Grid.Row="1" Height="19" Command="Open" VerticalAlignment="Top" HorizontalAlignment="Left" Width="60"/>
+        <Button Content="Create" Margin="75,41.2,0,0" Grid.Row="1" Height="19" VerticalAlignment="Top" Command="New" HorizontalAlignment="Left" Width="61"/>
+        <Button Content="Save" Margin="141,41.2,0,0" Grid.Row="1" Height="19" Command="Save" VerticalAlignment="Top" HorizontalAlignment="Left" Width="60"/>
         <TextBox Height="23" Margin="10,65.2,9.4,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Text="Name"/>
         <TextBox Height="23" Margin="10,93.2,9.4,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Text="Code"/>
-        <ListBox Grid.Column="0" Margin="10,121.2,9.4,10" Grid.Row="1"/>
-        <Button Content="◀ Transfer" Grid.Column="1" Margin="10.6,49.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"/>
-        <Button Content="◀◀ Transfer All" Grid.Column="1" Margin="10.6,73.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"/>
-        <Button Content="⌦ Cancel" Grid.Column="1" Margin="10.6,97.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"/>
-        <Button Content="🗙 Delete" Grid.Column="1" Margin="10.6,121.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"/>
-        <Label Content="Transfer From:" Margin="10.4,9.2,0,400" Grid.Column="2" HorizontalAlignment="Left" Width="85" Grid.Row="1"/>
-        <Label Content="*.cdb" Margin="0,9.2,5.2,400" Grid.Column="2" HorizontalContentAlignment="Right" HorizontalAlignment="Right" Width="101" Grid.Row="1"/>
+        <ListBox x:Name="ListBox_TransTo" Grid.Column="0" Margin="10,121.2,9.4,10" Grid.Row="1" ItemTemplate="{StaticResource ListBoxTemplate}" />
+        <Button x:Name="Button_Transfer" Content="◀ Transfer" Grid.Column="1" Margin="10.6,49.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top" Click="Button_Transfer_Click"/>
+        <Button x:Name="Button_TransferAll" Content="◀◀ Transfer All" Grid.Column="1" Margin="10.6,73.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top" Click="Button_TransferAll_Click"/>
+        <Button x:Name="Button_Cancel" Content="⌦ Cancel" Grid.Column="1" Margin="10.6,97.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top" Click="Button_Cancel_Click"/>
+        <Button x:Name="Button_Delete" Content="🗙 Delete" Grid.Column="1" Margin="10.6,121.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top" Click="Button_Delete_Click"/>
+        <TextBlock Text="Transfer From:" Margin="10.4,9.2,0,400" Grid.Column="2" HorizontalAlignment="Left" Width="85" Grid.Row="1" TextWrapping="Wrap"/>
+        <TextBlock Text="*.cdb" Margin="0,9.2,5.2,400" Grid.Column="2" TextAlignment="Right" HorizontalAlignment="Right" Width="101" Grid.Row="1" TextWrapping="Wrap"/>
         <TextBox Height="23" Margin="10.4,63.2,5.2,0" Grid.Row="1" Grid.Column="2" TextWrapping="Wrap" VerticalAlignment="Top" Text="Name"/>
         <TextBox Height="23" Margin="10.4,93.2,5.2,0" Grid.Row="1" Grid.Column="2" VerticalAlignment="Top" Text="Code"/>
-        <ListBox Margin="10.4,121.2,5.2,10" Grid.Column="2" Grid.Row="1"/>
-        <Border Background="#FFF1F1F1" Grid.Column="3" Margin="54.7,9.2,54.7,211" CornerRadius="3" Grid.Row="1">
+        <ListBox x:Name="ListBox_TransFrom" Margin="10.4,121.2,5.2,10" Grid.Column="2" Grid.Row="1" ItemTemplate="{StaticResource ListBoxTemplate}"/>
+        <Border Background="#FFF1F1F1" Grid.Column="3" Margin="54.7,9.2,54.7,211" CornerRadius="3" Grid.Row="1" Height="215.2" Width="148.8" VerticalAlignment="Top">
             <Image Grid.Column="3" Grid.Row="1" IsEnabled="False" Margin="0,0,0,0"/>
         </Border>
         <TextBox Grid.Column="3" Margin="9.8,229.2,9.8,10" TextWrapping="Wrap" IsReadOnly="True" IsEnabled="False" Grid.Row="1"/>
-        <Menu Grid.ColumnSpan="4" Margin="0,0,-0.4,435" Grid.RowSpan="2">
+        <Menu Grid.ColumnSpan="4" Margin="0,0,-0.4,435" Grid.RowSpan="2" Height="25" VerticalAlignment="Top">
             <MenuItem Header="File">
                 <MenuItem Header="New Database" Command="New" />
                 <MenuItem Header="Open Database (To)" Command="Open" />

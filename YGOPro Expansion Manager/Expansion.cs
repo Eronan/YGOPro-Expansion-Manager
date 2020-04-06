@@ -4,6 +4,8 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace YGOPro_Expansion_Manager
 {
@@ -11,7 +13,7 @@ namespace YGOPro_Expansion_Manager
     {
         //List<string> CardCodes = new List<string>();
         string name;
-
+        
         public Expansion(string expansionName, DataSet cardData)
         {
             this.name = expansionName;
@@ -24,12 +26,6 @@ namespace YGOPro_Expansion_Manager
             get { return name; }
         }
 
-        public void Merge(Expansion expansion)
-        {
-            this.Data.Merge(expansion.Data);
-            this.Text.Merge(expansion.Text);
-        }
-
         //Find Card Code
         public int FindIndex(long code)
         {
@@ -39,6 +35,12 @@ namespace YGOPro_Expansion_Manager
                 if (Data.Rows[i]["id"].Equals(code)) return i;
             }
             return -1;
+        }
+
+        public void Merge(Expansion expansion)
+        {
+            this.Data.Merge(expansion.Data);
+            this.Text.Merge(expansion.Text);
         }
 
         //Delete
@@ -77,7 +79,7 @@ namespace YGOPro_Expansion_Manager
                 }
 
                 if (removed == codes.Length) break;
-            } 
+            }
         }
 
         public void Delete(long code)
@@ -121,5 +123,74 @@ namespace YGOPro_Expansion_Manager
 
         public DataTable Data { get; set; }
         public DataTable Text { get; set; }
+    }
+
+    public class CardItem : INotifyPropertyChanged, IComparable<CardItem>
+    {
+        bool _newCard;
+        bool _deleted;
+
+        public CardItem(long code, string name, bool isOriginal = true)
+        {
+            this.Code = code;
+            this.Name = name;
+            this._newCard = false;
+            this._deleted = false;
+            this.IsOriginal = isOriginal;
+        }
+
+        public long Code { get; set; }
+        public string Name { get; set; }
+        public bool IsOriginal { get; set; }
+        public bool IsNew {
+            get { return _newCard; }
+            set
+            {
+                _newCard = value;
+                OnPropertyChanged("IsNew");
+            }
+        }
+        public bool IsDeleted {
+            get { return _deleted; }
+            set {
+                _deleted = value;
+                OnPropertyChanged("IsDeleted");
+            }
+        }
+
+        public CardItem()
+        {
+            IsNew = false;
+            IsDeleted = false;
+        }
+
+        public string NameFromTextRow(DataRow dataRow)
+        {
+            Name = dataRow["name"].ToString();
+            return Name;
+        }
+
+        public int CompareTo(CardItem other)
+        {
+            if (other.IsNew == this.IsNew)
+            {
+                return other.IsDeleted.CompareTo(this.IsDeleted);
+            }
+            else
+            {
+                return other.IsNew.CompareTo(this.IsNew);
+            }
+        }
+
+        #region INotifyPropertyChanged Members
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        #endregion
     }
 }
