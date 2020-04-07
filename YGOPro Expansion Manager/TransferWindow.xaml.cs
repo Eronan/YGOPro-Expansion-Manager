@@ -277,7 +277,6 @@ namespace YGOPro_Expansion_Manager
 
         private void Button_TransferAll_Click(object sender, RoutedEventArgs e)
         {
-
             //Check if Database has been Opened (Initialized)
             if (changesTo.Count == 0)
             {
@@ -290,6 +289,9 @@ namespace YGOPro_Expansion_Manager
             //Add New Card to Changes
             foreach (CardItem card in listFrom)
             {
+                //Add only Filtered Cards: Skip if doesn't fulfill Search Conditions
+                if (!FilterFunc(card, SearchBox_NameFrom, SearchBox_CodeFrom)) continue;
+                //Check if Card already exists in changesTo
                 int index = changesTo.FindIndex(item => item.Code == card.Code);
 
                 if (index != -1)
@@ -340,16 +342,27 @@ namespace YGOPro_Expansion_Manager
         #region FilterFunctions
         private void TextBox_FilterTo_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
-            //ListBox_TransTo.Items.Filter = new Predicate<object>();
+            //Check Initialization
             if (ListBox_TransTo == null || ListBox_TransTo.Items == null) return;
-            ListBox_TransTo.Items.Filter = FilterToFunc;
+            //Filter Items based on Function
+            ListBox_TransTo.Items.Filter = new Predicate<object>(item =>
+                FilterFunc((CardItem)item, SearchBox_NameTo, SearchBox_CodeTo)
+            );
         }
 
-        private bool FilterToFunc(object arg)
+        private void TextBox_FilterFrom_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
-            CardItem card = (CardItem)arg;
-            return (card.Name.Contains(SearchBox_NameTo.Text) || SearchBox_NameTo.Foreground != Brushes.Black)
-                && (card.Code.ToString().Contains(SearchBox_CodeTo.Text) || SearchBox_CodeTo.Foreground != Brushes.Black);
+            //ListBox_TransTo.Items.Filter = new Predicate<object>();
+            if (ListBox_TransFrom == null || ListBox_TransFrom.Items == null) return;
+            ListBox_TransFrom.Items.Filter = new Predicate<object>(item =>
+                FilterFunc((CardItem)item, SearchBox_NameFrom, SearchBox_CodeFrom)
+            );
+        }
+
+        private bool FilterFunc(CardItem card, System.Windows.Controls.TextBox nameBox, System.Windows.Controls.TextBox codeBox)
+        {
+            return (card.Name.Contains(nameBox.Text) || nameBox.Foreground != Brushes.Black)
+                && (card.Code.ToString().Contains(codeBox.Text) || codeBox.Foreground != Brushes.Black);
         }
 
         private void SearchBox_IsKeyboardFocusedChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -359,16 +372,16 @@ namespace YGOPro_Expansion_Manager
             {
                 if (searchBox.Foreground == Brushes.LightGray)
                 {
-                    searchBox.Text = "";
                     searchBox.Foreground = Brushes.Black;
+                    searchBox.Text = "";
                 }
             }
             else
             {
                 if (searchBox.Foreground == Brushes.Black && searchBox.Text == "")
                 {
-                    searchBox.Text = searchBox.Tag.ToString();
                     searchBox.Foreground = Brushes.LightGray;
+                    searchBox.Text = searchBox.Tag.ToString();
                 }
             }
 
