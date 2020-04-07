@@ -499,30 +499,60 @@ namespace YGOPro_Expansion_Manager
         #region Buttons
         private void Button_Delete_Click(object sender, RoutedEventArgs e)
         {
+            if (TableTo == null)
+            {
+                MessageBox.Show("Please open a database to continue.",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            else if (ListBox_TransTo.SelectedItem == null)
+            {
+                MessageBox.Show("Select a card to delete.",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             //Get Selected Item
-            CardItem selectedCard = (CardItem) ListBox_TransTo.SelectedItem;
+            CardItem selectedCard = (CardItem)ListBox_TransTo.SelectedItem;
+
             //Remove from List if it is not already in Database Originally
             if (!selectedCard.IsOriginal)
             {
                 changesTo.Remove(selectedCard);
                 selectedCard.IsNew = false;
             }
-            else selectedCard.IsDeleted = true;
+            else
+            {
+                if (selectedCard.IsNew)
+                {
+                    selectedCard.IsNew = false;
+                    selectedCard.IsDeleted = false;
+                }
+                else
+                {
+                    selectedCard.IsDeleted = true;
+                }
+            }
             //Prevent Loading new Database
             SortListChanged();
         }
 
         private void Button_Transfer_Click(object sender, RoutedEventArgs e)
         {
-            //Check if Database has been Opened (Initialized)
-            if (changesTo.Count == 0)
+            if (TableTo == null || TableFrom == null)
             {
-                MessageBox.Show("There is no database opened.",
+                //Check if Database has been Opened (Initialized)
+                MessageBox.Show("Please open a database to continue.",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            //Make Sure Item is Selected
-            if (ListBox_TransFrom.SelectedItem == null) return;
+            else if (ListBox_TransFrom.SelectedItem == null)
+            {
+                //Make Sure Item is Selected
+                MessageBox.Show("Select a card to transfer.",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             //Add New Card to Changes
             CardItem selectedCard = (CardItem)ListBox_TransFrom.SelectedItem;
@@ -551,9 +581,9 @@ namespace YGOPro_Expansion_Manager
         private void Button_TransferAll_Click(object sender, RoutedEventArgs e)
         {
             //Check if Database has been Opened (Initialized)
-            if (changesTo.Count == 0)
+            if (TableTo == null || TableFrom == null)
             {
-                MessageBox.Show("There is no database opened.",
+                MessageBox.Show("Please open a database to continue.",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -595,6 +625,13 @@ namespace YGOPro_Expansion_Manager
 
         private void Button_Cancel_Click(object sender, RoutedEventArgs e)
         {
+            if (TableTo == null)
+            {
+                MessageBox.Show("Please open a database to continue.",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             for (int i = 0; i < changesTo.Count; i++)
             {
                 CardItem card = changesTo[i];
