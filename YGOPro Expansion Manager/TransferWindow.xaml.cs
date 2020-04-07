@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.IO;
 using System.IO.Compression;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -64,93 +65,114 @@ namespace YGOPro_Expansion_Manager
         #region Commands
         private void Command_Create_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            List<UserError> createErrors = new List<UserError>();
             //Use Winforms' SaveFile Dialog
-            using (WinForms.SaveFileDialog saveDialog = new WinForms.SaveFileDialog())
+            try
             {
-                saveDialog.InitialDirectory = Properties.Settings.Default.Expansions;
-                saveDialog.Filter = "Card Database (*.cdb)|*.cdb";
-                if (saveDialog.ShowDialog() == WinForms.DialogResult.OK)
+                using (WinForms.SaveFileDialog saveDialog = new WinForms.SaveFileDialog())
                 {
-                    string filePath = saveDialog.FileName;
-                    toFilePath = filePath;
-                    //Save Settings
-                    Properties.Settings.Default.Expansions = Path.GetDirectoryName(filePath);
-                    Properties.Settings.Default.Save();
-                    //Show Database Name
-                    Label_DatabaseTo.Text = Path.GetFileName(filePath);
-
-                    SQLiteConnection.CreateFile(filePath);
-                    using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
+                    saveDialog.InitialDirectory = Properties.Settings.Default.Expansions;
+                    saveDialog.Filter = "Card Database (*.cdb)|*.cdb";
+                    if (saveDialog.ShowDialog() == WinForms.DialogResult.OK)
                     {
-                        sqlConn.Open();
-                        string execSql_Data = "CREATE TABLE 'datas' ('id' integer,'ot' integer, 'alias' integer," +
-                            "'setcode' integer, 'type' integer, 'atk' integer, 'def' integer, 'level' integer," +
-                            "'race' integer, 'attribute' integer, 'category' integer, PRIMARY KEY('id'))";
-                        string execSql_Text = "CREATE TABLE 'texts'('id' integer, 'name' text, 'desc' text," +
-                            "'str1' text, 'str2' text, 'str3' text, 'str4' text, 'str5' text, 'str6' text," +
-                            "'str7' text, 'str8' text, 'str9' text, 'str10' text, 'str11' text, 'str12' text," +
-                            "'str13' text, 'str14' text, 'str15' text, 'str16' text, PRIMARY KEY('id'))";
+                        string filePath = saveDialog.FileName;
+                        toFilePath = filePath;
+                        //Save Settings
+                        Properties.Settings.Default.Expansions = Path.GetDirectoryName(filePath);
+                        Properties.Settings.Default.Save();
+                        //Show Database Name
+                        Label_DatabaseTo.Text = Path.GetFileName(filePath);
 
-                        SQLiteCommand sqlCmd_Data = new SQLiteCommand(execSql_Data, sqlConn);
-                        sqlCmd_Data.ExecuteNonQuery();
+                        SQLiteConnection.CreateFile(filePath);
+                        using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
+                        {
+                            sqlConn.Open();
+                            string execSql_Data = "CREATE TABLE 'datas' ('id' integer,'ot' integer, 'alias' integer," +
+                                "'setcode' integer, 'type' integer, 'atk' integer, 'def' integer, 'level' integer," +
+                                "'race' integer, 'attribute' integer, 'category' integer, PRIMARY KEY('id'))";
+                            string execSql_Text = "CREATE TABLE 'texts'('id' integer, 'name' text, 'desc' text," +
+                                "'str1' text, 'str2' text, 'str3' text, 'str4' text, 'str5' text, 'str6' text," +
+                                "'str7' text, 'str8' text, 'str9' text, 'str10' text, 'str11' text, 'str12' text," +
+                                "'str13' text, 'str14' text, 'str15' text, 'str16' text, PRIMARY KEY('id'))";
 
-                        SQLiteCommand sqlCmd_Text = new SQLiteCommand(execSql_Text, sqlConn);
-                        sqlCmd_Text.ExecuteNonQuery();
+                            SQLiteCommand sqlCmd_Data = new SQLiteCommand(execSql_Data, sqlConn);
+                            sqlCmd_Data.ExecuteNonQuery();
 
-                        //Create Expansion
-                        if (TableTo != null) TableTo.Dispose();
-                        TableTo = OpenDatabase(sqlConn, filePath);
+                            SQLiteCommand sqlCmd_Text = new SQLiteCommand(execSql_Text, sqlConn);
+                            sqlCmd_Text.ExecuteNonQuery();
 
-                        //Clear or Create new 'changesTo' List
-                        InitializeChangesList();
+                            //Create Expansion
+                            if (TableTo != null) TableTo.Dispose();
+                            TableTo = OpenDatabase(sqlConn, filePath);
 
-                        //Dispose
-                        sqlCmd_Data.Dispose();
-                        sqlCmd_Text.Dispose();
-                        sqlConn.Close();
+                            //Clear or Create new 'changesTo' List
+                            InitializeChangesList();
+
+                            //Dispose
+                            sqlCmd_Data.Dispose();
+                            sqlCmd_Text.Dispose();
+                            sqlConn.Close();
+                        }
                     }
                 }
             }
-
-            //Fill ListBox with items
+            catch (Exception exception)
+            {
+                //Add Error
+                createErrors.Add(new UserError(exception));
+                //Window
+                ErrorList errorWindow = new ErrorList(createErrors.ToArray());
+                errorWindow.ShowDialog();
+                errorWindow.Close();
+            }
         }
 
         private void Command_Open_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            using (WinForms.OpenFileDialog openDialog = new WinForms.OpenFileDialog())
+            List<UserError> openErrors = new List<UserError>();
+            try
             {
-                //Set Up OpenFileDialog
-                openDialog.InitialDirectory = Properties.Settings.Default.Expansions;
-                openDialog.Filter = "Card Database (*.cdb)|*.cdb";
-                //Open FileDialog
-                if (openDialog.ShowDialog() == WinForms.DialogResult.OK)
+                using (WinForms.OpenFileDialog openDialog = new WinForms.OpenFileDialog())
                 {
-                    string filePath = openDialog.FileName;
-                    toFilePath = filePath;
-                    //Save Settings
-                    Properties.Settings.Default.Expansions = Path.GetDirectoryName(filePath);
-                    Properties.Settings.Default.Save();
-                    //Show Database Name
-                    Label_DatabaseTo.Text = Path.GetFileName(filePath);
-
-                    //Open Database
-                    using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
+                    //Set Up OpenFileDialog
+                    openDialog.InitialDirectory = Properties.Settings.Default.Expansions;
+                    openDialog.Filter = "Card Database (*.cdb)|*.cdb";
+                    //Open FileDialog
+                    if (openDialog.ShowDialog() == WinForms.DialogResult.OK)
                     {
-                        sqlConn.Open();
+                        string filePath = openDialog.FileName;
+                        toFilePath = filePath;
+                        //Save Settings
+                        Properties.Settings.Default.Expansions = Path.GetDirectoryName(filePath);
+                        Properties.Settings.Default.Save();
+                        //Show Database Name
+                        Label_DatabaseTo.Text = Path.GetFileName(filePath);
 
-                        //Create Expansion
-                        if (TableTo != null) TableTo.Dispose();
-                        TableTo = OpenDatabase(sqlConn, filePath);
+                        //Open Database
+                        using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
+                        {
+                            sqlConn.Open();
 
-                        //Clear or Create new 'changesTo' List
-                        InitializeChangesList();
+                            //Create Expansion
+                            if (TableTo != null) TableTo.Dispose();
+                            TableTo = OpenDatabase(sqlConn, filePath);
 
-                        hasChanges = false;
+                            //Clear or Create new 'changesTo' List
+                            InitializeChangesList();
+
+                            hasChanges = false;
+                        }
                     }
                 }
+            } catch (Exception exception)
+            {
+                //Add Error
+                openErrors.Add(new UserError(exception));
+                //Window
+                ErrorList errorWindow = new ErrorList(openErrors.ToArray());
+                errorWindow.ShowDialog();
+                errorWindow.Close();
             }
-
-            //Fill ListBox with items
         }
 
         private void Command_Load_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -162,162 +184,195 @@ namespace YGOPro_Expansion_Manager
                     "Please Save Changes", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+
+            List<UserError> loadErrors = new List<UserError>();
             //Use Winforms' OpenFileDialog
-            using (WinForms.OpenFileDialog openDialog = new WinForms.OpenFileDialog())
+            try
             {
-                //Set Up OpenFileDialog
-                openDialog.InitialDirectory = Properties.Settings.Default.Path;
-                openDialog.Filter = "Card Database (*.cdb)|*.cdb";
-                //Open FileDialog
-                if (openDialog.ShowDialog() == WinForms.DialogResult.OK)
+                using (WinForms.OpenFileDialog openDialog = new WinForms.OpenFileDialog())
                 {
-                    string filePath = openDialog.FileName;
-                    fromFilePath = filePath;
-                    //Save Settings
-                    Properties.Settings.Default.Path = Path.GetDirectoryName(filePath);
-                    Properties.Settings.Default.Save();
-                    //Show Database Name
-                    Label_DatabaseFrom.Text = Path.GetFileName(filePath);
-
-                    //Open Database
-                    using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
+                    //Set Up OpenFileDialog
+                    openDialog.InitialDirectory = Properties.Settings.Default.Path;
+                    openDialog.Filter = "Card Database (*.cdb)|*.cdb";
+                    //Open FileDialog
+                    if (openDialog.ShowDialog() == WinForms.DialogResult.OK)
                     {
-                        sqlConn.Open();
+                        string filePath = openDialog.FileName;
+                        fromFilePath = filePath;
+                        //Save Settings
+                        Properties.Settings.Default.Path = Path.GetDirectoryName(filePath);
+                        Properties.Settings.Default.Save();
+                        //Show Database Name
+                        Label_DatabaseFrom.Text = Path.GetFileName(filePath);
 
-                        //Create Expansion
-                        if (TableFrom != null) TableFrom.Dispose();
-                        TableFrom = OpenDatabase(sqlConn, filePath);
-
-                        //Add Card List to Changes
-                        listFrom.Clear();
-                        foreach (DataRow dr in TableFrom.Text.Rows)
+                        //Open Database
+                        using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
                         {
-                            //Add Cards to List as "Not Original"
-                            listFrom.Add(new CardItem(Convert.ToInt64(dr["id"]), dr["name"].ToString(), false));
-                        }
+                            sqlConn.Open();
 
-                        ListBox_TransFrom.ItemsSource = listFrom;
-                        ListBox_TransFrom.Items.Refresh();
+                            //Create Expansion
+                            if (TableFrom != null) TableFrom.Dispose();
+                            TableFrom = OpenDatabase(sqlConn, filePath);
+
+                            //Add Card List to Changes
+                            listFrom.Clear();
+                            foreach (DataRow dr in TableFrom.Text.Rows)
+                            {
+                                //Add Cards to List as "Not Original"
+                                listFrom.Add(new CardItem(Convert.ToInt64(dr["id"]), dr["name"].ToString(), false));
+                            }
+
+                            //Fill ListBox
+                            ListBox_TransFrom.ItemsSource = listFrom;
+                            ListBox_TransFrom.Items.Refresh();
+                        }
                     }
                 }
             }
-
-            //Fill ListBox with items
+            catch (Exception exception)
+            {
+                //Add Error
+                loadErrors.Add(new UserError(exception));
+                //Window
+                ErrorList errorWindow = new ErrorList(loadErrors.ToArray());
+                errorWindow.ShowDialog();
+                errorWindow.Close();
+            }
         }
 
         private void Command_Save_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+            List<UserError> saveErrors = new List<UserError>();
             //Set up SQL Connection
-            using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + toFilePath))
+            try
             {
-                sqlConn.Open();
-
-                int startOfExtension = toFilePath.Length - 4;
-
-
-                //Set Up Zip File Connection to "To Zip File"
-                using (var zipFileTo = ZipFile.Open(GetZipFilePath(toFilePath), ZipArchiveMode.Update))
+                using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + toFilePath))
                 {
-                    foreach (CardItem cardItem in changesTo)
+                    sqlConn.Open();
+
+                    int startOfExtension = toFilePath.Length - 4;
+
+                    //Set Up Zip File Connection to "To Zip File"
+                    using (var zipFileTo = ZipFile.Open(GetZipFilePath(toFilePath), ZipArchiveMode.Update))
                     {
-                        if (cardItem.IsNew)
+                        foreach (CardItem cardItem in changesTo)
                         {
-                            //Set Up Zip File Connection to "From Zip File"
-                            using (var zipFileFrom = ZipFile.Open(GetZipFilePath(fromFilePath), ZipArchiveMode.Read))
+                            if (cardItem.IsNew)
                             {
-                                if (cardItem.IsOriginal)
+                                //Set Up Zip File Connection to "From Zip File"
+                                using (var zipFileFrom = ZipFile.Open(GetZipFilePath(fromFilePath), ZipArchiveMode.Read))
                                 {
-                                    //Update Row in Table
-                                    //Commands
-                                    SQLiteCommand sqlCmd_updateData = new SQLiteCommand("UPDATE datas " +
-                                        "SET ot=@format, alias=@alias, setcode=@setcode, type=@type, atk=@atk, def=@def, " +
-                                        "level=@level, race=@race, attribute=@attribute, category=@category " +
-                                        "WHERE id=@code", sqlConn);
-                                    SQLiteCommand sqlCmd_updateText = new SQLiteCommand("UPDATE texts " +
-                                        "SET name=@name, desc=@desc, " +
-                                        "str1=@str1, str2=@str2, str3=@str3, str4=@str4, str5=@str5, str6=@str6, " +
-                                        "str7=@str7, str8=@str8, str9=@str9, str10=@str10, str11=@str11, str12=@str12, " +
-                                        "str13=@str13, str14=@str14, str15=@str15, str16=@str16 " +
-                                        "WHERE id=@code", sqlConn);
+                                    if (cardItem.IsOriginal)
+                                    {
+                                        //Update Row in Table
+                                        //Commands
+                                        SQLiteCommand sqlCmd_updateData = new SQLiteCommand("UPDATE datas " +
+                                            "SET ot=@format, alias=@alias, setcode=@setcode, type=@type, atk=@atk, def=@def, " +
+                                            "level=@level, race=@race, attribute=@attribute, category=@category " +
+                                            "WHERE id=@code", sqlConn);
+                                        SQLiteCommand sqlCmd_updateText = new SQLiteCommand("UPDATE texts " +
+                                            "SET name=@name, desc=@desc, " +
+                                            "str1=@str1, str2=@str2, str3=@str3, str4=@str4, str5=@str5, str6=@str6, " +
+                                            "str7=@str7, str8=@str8, str9=@str9, str10=@str10, str11=@str11, str12=@str12, " +
+                                            "str13=@str13, str14=@str14, str15=@str15, str16=@str16 " +
+                                            "WHERE id=@code", sqlConn);
 
-                                    //Initialize Parameters
-                                    AddParametersFromExpansion(sqlCmd_updateData, sqlCmd_updateText, TableFrom, cardItem.Code);
+                                        //Initialize Parameters
+                                        AddParametersFromExpansion(sqlCmd_updateData, sqlCmd_updateText, TableFrom, cardItem.Code);
 
-                                    //Execute
-                                    sqlCmd_updateData.ExecuteNonQuery();
-                                    sqlCmd_updateText.ExecuteNonQuery();
+                                        //Execute
+                                        sqlCmd_updateData.ExecuteNonQuery();
+                                        sqlCmd_updateText.ExecuteNonQuery();
 
-                                    //Images and Scripts
-                                    DeleteFilesFromZipArchive(zipFileTo, cardItem.Code);
-                                    MoveFilesToZip(zipFileTo, zipFileFrom, cardItem.Code);
-                                }
-                                else
-                                {
-                                    //Insert Row in Table
-                                    SQLiteCommand sqlCmd_insertData = new SQLiteCommand("INSERT INTO datas (id , ot, alias, " +
-                                        "setcode, type, atk, def, level, race, attribute, category) " +
-                                        "VALUES (@code, @format, @alias, @setcode, @type, @atk, @def, " +
-                                        "@level, @race, @attribute, @category)", sqlConn);
-                                    SQLiteCommand sqlCmd_insertText = new SQLiteCommand("INSERT INTO texts (id, name, desc, " +
-                                        "str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, " +
-                                        "str13, str14, str15, str16) " +
-                                        "VALUES (@code, @name, @desc, " + 
-                                        "@str1, @str2, @str3, @str4, @str5, @str6, @str7, @str8, @str9, @str10, @str11, @str12, " +
-                                        "@str13, @str14, @str15, @str16)", sqlConn);
+                                        //Images and Scripts
+                                        DeleteFilesFromZipArchive(zipFileTo, cardItem.Code, saveErrors);
+                                        MoveFilesToZip(zipFileTo, zipFileFrom, cardItem.Code, saveErrors);
 
-                                    //Instantiate Parameters
-                                    AddParametersFromExpansion(sqlCmd_insertData, sqlCmd_insertText, TableFrom, cardItem.Code);
+                                        sqlCmd_updateData.Dispose();
+                                        sqlCmd_updateText.Dispose();
+                                    }
+                                    else
+                                    {
+                                        //Insert Row in Table
+                                        SQLiteCommand sqlCmd_insertData = new SQLiteCommand("INSERT INTO datas (id , ot, alias, " +
+                                            "setcode, type, atk, def, level, race, attribute, category) " +
+                                            "VALUES (@code, @format, @alias, @setcode, @type, @atk, @def, " +
+                                            "@level, @race, @attribute, @category)", sqlConn);
+                                        SQLiteCommand sqlCmd_insertText = new SQLiteCommand("INSERT INTO texts (id, name, desc, " +
+                                            "str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, " +
+                                            "str13, str14, str15, str16) " +
+                                            "VALUES (@code, @name, @desc, " +
+                                            "@str1, @str2, @str3, @str4, @str5, @str6, @str7, @str8, @str9, @str10, @str11, @str12, " +
+                                            "@str13, @str14, @str15, @str16)", sqlConn);
 
-                                    //Execute
-                                    sqlCmd_insertData.ExecuteNonQuery();
-                                    sqlCmd_insertText.ExecuteNonQuery();
+                                        //Instantiate Parameters
+                                        AddParametersFromExpansion(sqlCmd_insertData, sqlCmd_insertText, TableFrom, cardItem.Code);
 
-                                    //Images and Scripts
-                                    DeleteFilesFromZipArchive(zipFileTo, cardItem.Code);    //Delete If Necessary
-                                    MoveFilesToZip(zipFileTo, zipFileFrom, cardItem.Code);  //Move
+                                        //Execute
+                                        sqlCmd_insertData.ExecuteNonQuery();
+                                        sqlCmd_insertText.ExecuteNonQuery();
+
+                                        //Images and Scripts
+                                        DeleteFilesFromZipArchive(zipFileTo, cardItem.Code, saveErrors, true);    //Delete If Necessary
+                                        MoveFilesToZip(zipFileTo, zipFileFrom, cardItem.Code, saveErrors);  //Move
+
+                                        sqlCmd_insertData.Dispose();
+                                        sqlCmd_insertText.Dispose();
+                                    }
                                 }
                             }
-                        }
-                        else if (cardItem.IsDeleted)
-                        {
-                            //Delete Row from Table
-                            SQLiteCommand sqlCmd_deleteData = new SQLiteCommand("DELETE FROM datas WHERE id=@code", sqlConn);
-                            SQLiteCommand sqlCmd_deleteText = new SQLiteCommand("DELETE FROM texts WHERE id=@code", sqlConn);
-                            sqlCmd_deleteData.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
-                            sqlCmd_deleteText.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
+                            else if (cardItem.IsDeleted)
+                            {
+                                //Delete Row from Table
+                                SQLiteCommand sqlCmd_deleteData = new SQLiteCommand("DELETE FROM datas WHERE id=@code", sqlConn);
+                                SQLiteCommand sqlCmd_deleteText = new SQLiteCommand("DELETE FROM texts WHERE id=@code", sqlConn);
+                                sqlCmd_deleteData.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
+                                sqlCmd_deleteText.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
 
-                            sqlCmd_deleteData.ExecuteNonQuery();
-                            sqlCmd_deleteText.ExecuteNonQuery();
+                                sqlCmd_deleteData.ExecuteNonQuery();
+                                sqlCmd_deleteText.ExecuteNonQuery();
 
-                            //Delete Files
-                            DeleteFilesFromZipArchive(zipFileTo, cardItem.Code);
+                                //Delete Files
+                                DeleteFilesFromZipArchive(zipFileTo, cardItem.Code, saveErrors);
 
-                            sqlCmd_deleteData.Dispose();
-                            sqlCmd_deleteText.Dispose();
+                                sqlCmd_deleteData.Dispose();
+                                sqlCmd_deleteText.Dispose();
+                            }
                         }
                     }
+
+                    //Create Expansion
+                    if (TableTo != null) TableTo.Dispose();
+                    TableTo = OpenDatabase(sqlConn, toFilePath);
+
+                    //Clear or Create new 'changesTo' List
+                    InitializeChangesList();
+
+                    hasChanges = false;
+                    //Close Connection
+                    sqlConn.Close();
                 }
 
-                //Create Expansion
-                if (TableTo != null) TableTo.Dispose();
-                TableTo = OpenDatabase(sqlConn, toFilePath);
-
-                //Clear or Create new 'changesTo' List
-                InitializeChangesList();
-
-                hasChanges = false;
-                //Close Connection
-                sqlConn.Close();
+                foreach (CardItem card in listFrom)
+                {
+                    card.IsNew = false;
+                    card.IsDeleted = false;
+                }
+            }
+            catch (Exception exception)
+            {
+                saveErrors.Add(new UserError(exception));
             }
 
-            foreach (CardItem card in listFrom)
+            if (saveErrors.Count > 0)
             {
-                card.IsNew = false;
-                card.IsDeleted = false;
+                ErrorList errorWindow = new ErrorList(saveErrors.ToArray());
+                errorWindow.ShowDialog();
+                errorWindow.Close();
             }
         }
 
-        private static void MoveFilesToZip(ZipArchive archiveTo, ZipArchive archiveFrom, long code)
+        private void MoveFilesToZip(ZipArchive archiveTo, ZipArchive archiveFrom, long code, List<UserError> errorList)
         {
             //Get Paths
             string scriptPath = "script/c" + code + ".lua";
@@ -336,9 +391,11 @@ namespace YGOPro_Expansion_Manager
                 scriptStream.Close();
                 fromScriptStream.Close();
             }
+            else errorList.Add(new UserError(scriptPath + " could not be added because it was not found in " + GetZipFilePath(fromFilePath),
+                this.Title, MethodBase.GetCurrentMethod(), ErrorType.Warning));
 
             //Picture File
-            if (archiveTo.GetEntry(picsPath) != null)
+            if (archiveFrom.GetEntry(picsPath) != null)
             {
                 //Create Streams
                 var picStream = archiveTo.CreateEntry(picsPath).Open();     //'To' Zip File
@@ -350,6 +407,8 @@ namespace YGOPro_Expansion_Manager
                 picStream.Close();
                 fromPicsStream.Close();
             }
+            else errorList.Add(new UserError(picsPath + " could not be added because it was not found in " + GetZipFilePath(fromFilePath),
+              this.Title, MethodBase.GetCurrentMethod(), ErrorType.Warning));
         }
 
         private static void AddParametersFromExpansion(SQLiteCommand dataCmd, SQLiteCommand textCmd, Expansion expansion, long code)
@@ -393,13 +452,17 @@ namespace YGOPro_Expansion_Manager
             textCmd.Parameters.Add("@str16", DbType.String).Value = textRow["str16"];
         }
 
-        private static bool DeleteFilesFromZipArchive(ZipArchive zipArchive, long code)
+        private bool DeleteFilesFromZipArchive(ZipArchive zipArchive, long code, List<UserError> errorList, bool suppressErrors = false)
         {
             //Delete Items from Zip
             var scriptFile = zipArchive.GetEntry("script/c" + code + ".lua");
             var picFile = zipArchive.GetEntry("pics/" + code + ".jpg");
             if (scriptFile != null) scriptFile.Delete();
+            else if (!suppressErrors) errorList.Add(new UserError(scriptFile + " could not be deleted because it was not found in " + GetZipFilePath(toFilePath),
+                this.Title, MethodBase.GetCurrentMethod(), ErrorType.Warning));
             if (picFile != null) picFile.Delete();
+            else if (!suppressErrors) errorList.Add(new UserError(scriptFile + " could not be deleted because it was not found in " + GetZipFilePath(toFilePath),
+                this.Title, MethodBase.GetCurrentMethod(), ErrorType.Warning));
 
             return scriptFile != null || picFile != null;
         }
@@ -556,7 +619,7 @@ namespace YGOPro_Expansion_Manager
         {
             MessageBox.Show("YGOPro Expansion Manager\n" + 
                 "Creator: Eronan\n" + 
-                "Version: 2.0.0\n",
+                "Version: 1.0.0\n",
                 "About", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         #endregion

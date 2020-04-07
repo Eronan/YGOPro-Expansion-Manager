@@ -24,3 +24,5 @@ D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Man
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\TransferWindow.g.cs
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\TransferWindow.baml
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\GeneratedInternalTypeHelper.g.cs
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\ErrorList.g.cs
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\ErrorList.baml
