@@ -233,12 +233,53 @@ namespace YGOPro_Expansion_Manager
                                 if (cardItem.IsOriginal)
                                 {
                                     //Update Row in Table
-                                    //Replace Files in Zip
+                                    //Commands
+                                    SQLiteCommand sqlCmd_updateData = new SQLiteCommand("UPDATE datas " +
+                                        "SET ot=@format, alias=@alias, setcode=@setcode, type=@type, atk=@atk, def=@def, " +
+                                        "level=@level, race=@race, attribute=@attribute, category=@category " +
+                                        "WHERE id=@code", sqlConn);
+                                    SQLiteCommand sqlCmd_updateText = new SQLiteCommand("UPDATE texts " +
+                                        "SET name=@name, desc=@desc, " +
+                                        "str1=@str1, str2=@str2, str3=@str3, str4=@str4, str5=@str5, str6=@str6, " +
+                                        "str7=@str7, str8=@str8, str9=@str9, str10=@str10, str11=@str11, str12=@str12, " +
+                                        "str13=@str13, str14=@str14, str15=@str15, str16=@str16 " +
+                                        "WHERE id=@code", sqlConn);
+
+                                    //Initialize Parameters
+                                    AddParametersFromExpansion(sqlCmd_updateData, sqlCmd_updateText, TableFrom, cardItem.Code);
+
+                                    //Execute
+                                    sqlCmd_updateData.ExecuteNonQuery();
+                                    sqlCmd_updateText.ExecuteNonQuery();
+
+                                    //Images and Scripts
+                                    DeleteFilesFromZipArchive(zipFileTo, cardItem.Code);
+                                    MoveFilesToZip(zipFileTo, zipFileFrom, cardItem.Code);
                                 }
                                 else
                                 {
                                     //Insert Row in Table
-                                    //Save Files in Zip
+                                    SQLiteCommand sqlCmd_insertData = new SQLiteCommand("INSERT INTO datas (id , ot, alias, " +
+                                        "setcode, type, atk, def, level, race, attribute, category) " +
+                                        "VALUES (@code, @format, @alias, @setcode, @type, @atk, @def, " +
+                                        "@level, @race, @attribute, @category)", sqlConn);
+                                    SQLiteCommand sqlCmd_insertText = new SQLiteCommand("INSERT INTO texts (id, name, desc, " +
+                                        "str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, " +
+                                        "str13, str14, str15, str16) " +
+                                        "VALUES (@code, @name, @desc, " + 
+                                        "@str1, @str2, @str3, @str4, @str5, @str6, @str7, @str8, @str9, @str10, @str11, @str12, " +
+                                        "@str13, @str14, @str15, @str16)", sqlConn);
+
+                                    //Instantiate Parameters
+                                    AddParametersFromExpansion(sqlCmd_insertData, sqlCmd_insertText, TableFrom, cardItem.Code);
+
+                                    //Execute
+                                    sqlCmd_insertData.ExecuteNonQuery();
+                                    sqlCmd_insertText.ExecuteNonQuery();
+
+                                    //Images and Scripts
+                                    DeleteFilesFromZipArchive(zipFileTo, cardItem.Code);    //Delete If Necessary
+                                    MoveFilesToZip(zipFileTo, zipFileFrom, cardItem.Code);  //Move
                                 }
                             }
                         }
@@ -250,13 +291,11 @@ namespace YGOPro_Expansion_Manager
                             sqlCmd_deleteData.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
                             sqlCmd_deleteText.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
 
-                            int deleted = sqlCmd_deleteData.ExecuteNonQuery();
-                            deleted = sqlCmd_deleteText.ExecuteNonQuery();
-                            //Delete Items from Zip
-                            var scriptFile = zipFileTo.GetEntry("script/c" + cardItem.Code + ".lua");
-                            var picFile = zipFileTo.GetEntry("pics/" + cardItem.Code + ".pic");
-                            if (scriptFile != null) scriptFile.Delete();
-                            if (picFile != null) picFile.Delete();
+                            sqlCmd_deleteData.ExecuteNonQuery();
+                            sqlCmd_deleteText.ExecuteNonQuery();
+
+                            //Delete Files
+                            DeleteFilesFromZipArchive(zipFileTo, cardItem.Code);
 
                             sqlCmd_deleteData.Dispose();
                             sqlCmd_deleteText.Dispose();
@@ -275,6 +314,93 @@ namespace YGOPro_Expansion_Manager
                 //Close Connection
                 sqlConn.Close();
             }
+
+            foreach (CardItem card in listFrom)
+            {
+                card.IsNew = false;
+                card.IsDeleted = false;
+            }
+        }
+
+        private static void MoveFilesToZip(ZipArchive archiveTo, ZipArchive archiveFrom, long code)
+        {
+            //Get Paths
+            string scriptPath = "script/c" + code + ".lua";
+            string picsPath = "pics/" + code + ".jpg";
+
+            //Script File
+            //Create Streams
+            var scriptStream = archiveTo.CreateEntry(scriptPath).Open();    //'To' Zip File
+            var fromScriptStream = archiveFrom.GetEntry(scriptPath).Open(); //'From' Zip File
+
+            //Copy
+            fromScriptStream.CopyTo(scriptStream);
+            //Close Streams
+            scriptStream.Close();
+            fromScriptStream.Close();
+
+            //Picture File
+            //Create Streams
+            var picStream = archiveTo.CreateEntry(picsPath).Open();     //'To' Zip File
+            var fromPicsStream = archiveFrom.GetEntry(picsPath).Open(); //'From' Zip File
+
+            //Copy
+            fromPicsStream.CopyTo(picStream);
+            //Close Streams
+            picStream.Close();
+            fromPicsStream.Close();
+        }
+
+        private static void AddParametersFromExpansion(SQLiteCommand dataCmd, SQLiteCommand textCmd, Expansion expansion, long code)
+        {
+            //Add Code to Parameters
+            dataCmd.Parameters.Add("@code", DbType.Int64).Value = code;
+            textCmd.Parameters.Add("@code", DbType.Int64).Value = code;
+
+            //Set Up Data Parameters
+            DataRow dataRow = expansion.Data.Select("id=" + code)[0];
+            dataCmd.Parameters.Add("@format", DbType.Int32).Value = dataRow["ot"];
+            dataCmd.Parameters.Add("@alias", DbType.Int64).Value = dataRow["alias"];
+            dataCmd.Parameters.Add("@setcode", DbType.Int64).Value = dataRow["setcode"];
+            dataCmd.Parameters.Add("@type", DbType.Int64).Value = dataRow["type"];
+            dataCmd.Parameters.Add("@atk", DbType.Int64).Value = dataRow["atk"];
+            dataCmd.Parameters.Add("@def", DbType.Int64).Value = dataRow["def"];
+            dataCmd.Parameters.Add("@level", DbType.Int64).Value = dataRow["level"];
+            dataCmd.Parameters.Add("@race", DbType.Int64).Value = dataRow["race"];
+            dataCmd.Parameters.Add("@attribute", DbType.Int64).Value = dataRow["attribute"];
+            dataCmd.Parameters.Add("@category", DbType.Int64).Value = dataRow["category"];
+
+            //Set Up Text Parameters
+            DataRow textRow = expansion.Text.Select("id=" + code)[0];
+            textCmd.Parameters.Add("@name", DbType.String).Value = textRow["name"];
+            textCmd.Parameters.Add("@desc", DbType.String).Value = textRow["desc"];
+            textCmd.Parameters.Add("@str1", DbType.String).Value = textRow["str1"];
+            textCmd.Parameters.Add("@str2", DbType.String).Value = textRow["str2"];
+            textCmd.Parameters.Add("@str3", DbType.String).Value = textRow["str3"];
+            textCmd.Parameters.Add("@str4", DbType.String).Value = textRow["str4"];
+            textCmd.Parameters.Add("@str5", DbType.String).Value = textRow["str5"];
+            textCmd.Parameters.Add("@str6", DbType.String).Value = textRow["str6"];
+            textCmd.Parameters.Add("@str7", DbType.String).Value = textRow["str7"];
+            textCmd.Parameters.Add("@str8", DbType.String).Value = textRow["str8"];
+            textCmd.Parameters.Add("@str9", DbType.String).Value = textRow["str9"];
+            textCmd.Parameters.Add("@str10", DbType.String).Value = textRow["str10"];
+            textCmd.Parameters.Add("@str11", DbType.String).Value = textRow["str11"];
+            textCmd.Parameters.Add("@str12", DbType.String).Value = textRow["str12"];
+            textCmd.Parameters.Add("@str13", DbType.String).Value = textRow["str13"];
+            textCmd.Parameters.Add("@str14", DbType.String).Value = textRow["str14"];
+            textCmd.Parameters.Add("@str15", DbType.String).Value = textRow["str15"];
+            textCmd.Parameters.Add("@str16", DbType.String).Value = textRow["str16"];
+        }
+
+        private static bool DeleteFilesFromZipArchive(ZipArchive zipArchive, long code)
+        {
+            //Delete Items from Zip
+            var scriptFile = zipArchive.GetEntry("script/c" + code + ".lua");
+            var picFile = zipArchive.GetEntry("pics/" + code + ".jpg");
+            if (scriptFile != null) scriptFile.Delete();
+            if (picFile != null) picFile.Delete();
+
+            return scriptFile != null || picFile != null;
         }
 
         private static Expansion OpenDatabase(SQLiteConnection sqlConn, string filePath)
@@ -416,9 +542,12 @@ namespace YGOPro_Expansion_Manager
                 else
                 {
                     changesTo.RemoveAt(i);
+                    card.IsNew = false;
                     i--;
                 }
             }
+            ListBox_TransTo.Items.Refresh();
+            ListBox_TransFrom.Items.Refresh();
             hasChanges = false;
         }
         #endregion
