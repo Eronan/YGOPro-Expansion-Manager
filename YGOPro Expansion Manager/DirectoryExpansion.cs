@@ -34,7 +34,7 @@ namespace YGOPro_Expansion_Manager
             set { checked_expansions = value; }
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (base.Data != null) base.Data.Dispose();
             if (base.Text != null) base.Text.Dispose();

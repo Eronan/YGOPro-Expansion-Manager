@@ -1,16 +1,14 @@
-﻿using System.Data;
-using System.Data.SQLite;
+﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SQLite;
+using System.IO;
+using System.IO.Compression;
 using System.Windows;
 using System.Windows.Input;
-using System.Linq;
-using WinForms = System.Windows.Forms;
-using System;
-using System.IO;
-using System.ComponentModel;
 using System.Windows.Media;
-using System.IO.Compression;
 using System.Windows.Media.Imaging;
+using WinForms = System.Windows.Forms;
 
 namespace YGOPro_Expansion_Manager
 {
@@ -31,14 +29,11 @@ namespace YGOPro_Expansion_Manager
         //Global Variables
         string fromFilePath;
         string toFilePath;
-        System.Drawing.Image currentSource;
-        BitmapImage imageStream;
 
         public TransferWindow()
         {
             InitializeComponent();
             ListBox_TransTo.ItemsSource = changesTo;
-            imageStream = new BitmapImage();
         }
 
         //Clear/Create New 'changesTo' List
@@ -329,26 +324,32 @@ namespace YGOPro_Expansion_Manager
             string picsPath = "pics/" + code + ".jpg";
 
             //Script File
-            //Create Streams
-            var scriptStream = archiveTo.CreateEntry(scriptPath).Open();    //'To' Zip File
-            var fromScriptStream = archiveFrom.GetEntry(scriptPath).Open(); //'From' Zip File
+            if (archiveFrom.GetEntry(scriptPath) != null)
+            {
+                //Create Streams
+                var scriptStream = archiveTo.CreateEntry(scriptPath).Open();    //'To' Zip File
+                var fromScriptStream = archiveFrom.GetEntry(scriptPath).Open(); //'From' Zip File
 
-            //Copy
-            fromScriptStream.CopyTo(scriptStream);
-            //Close Streams
-            scriptStream.Close();
-            fromScriptStream.Close();
+                //Copy
+                fromScriptStream.CopyTo(scriptStream);
+                //Close Streams
+                scriptStream.Close();
+                fromScriptStream.Close();
+            }
 
             //Picture File
-            //Create Streams
-            var picStream = archiveTo.CreateEntry(picsPath).Open();     //'To' Zip File
-            var fromPicsStream = archiveFrom.GetEntry(picsPath).Open(); //'From' Zip File
+            if (archiveTo.GetEntry(picsPath) != null)
+            {
+                //Create Streams
+                var picStream = archiveTo.CreateEntry(picsPath).Open();     //'To' Zip File
+                var fromPicsStream = archiveFrom.GetEntry(picsPath).Open(); //'From' Zip File
 
-            //Copy
-            fromPicsStream.CopyTo(picStream);
-            //Close Streams
-            picStream.Close();
-            fromPicsStream.Close();
+                //Copy
+                fromPicsStream.CopyTo(picStream);
+                //Close Streams
+                picStream.Close();
+                fromPicsStream.Close();
+            }
         }
 
         private static void AddParametersFromExpansion(SQLiteCommand dataCmd, SQLiteCommand textCmd, Expansion expansion, long code)
@@ -549,6 +550,11 @@ namespace YGOPro_Expansion_Manager
             ListBox_TransTo.Items.Refresh();
             ListBox_TransFrom.Items.Refresh();
             hasChanges = false;
+        }
+
+        private void MenuItem_About_Click(object sender, RoutedEventArgs e)
+        {
+
         }
         #endregion
 
