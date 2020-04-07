@@ -151,7 +151,6 @@ namespace YGOPro_Expansion_Manager
                         InitializeChangesList();
 
                         hasChanges = false;
-
                     }
                 }
             }
@@ -213,7 +212,69 @@ namespace YGOPro_Expansion_Manager
 
         private void Command_Save_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-            
+            //Set up SQL Connection
+            using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + toFilePath))
+            {
+                sqlConn.Open();
+
+                int startOfExtension = toFilePath.Length - 4;
+
+
+                //Set Up Zip File Connection to "To Zip File"
+                using (var zipFileTo = ZipFile.Open(GetZipFilePath(toFilePath), ZipArchiveMode.Update))
+                {
+                    foreach (CardItem cardItem in changesTo)
+                    {
+                        if (cardItem.IsNew)
+                        {
+                            //Set Up Zip File Connection to "From Zip File"
+                            using (var zipFileFrom = ZipFile.Open(GetZipFilePath(fromFilePath), ZipArchiveMode.Read))
+                            {
+                                if (cardItem.IsOriginal)
+                                {
+                                    //Update Row in Table
+                                    //Replace Files in Zip
+                                }
+                                else
+                                {
+                                    //Insert Row in Table
+                                    //Save Files in Zip
+                                }
+                            }
+                        }
+                        else if (cardItem.IsDeleted)
+                        {
+                            //Delete Row from Table
+                            SQLiteCommand sqlCmd_deleteData = new SQLiteCommand("DELETE FROM datas WHERE id=@code", sqlConn);
+                            SQLiteCommand sqlCmd_deleteText = new SQLiteCommand("DELETE FROM texts WHERE id=@code", sqlConn);
+                            sqlCmd_deleteData.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
+                            sqlCmd_deleteText.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
+
+                            int deleted = sqlCmd_deleteData.ExecuteNonQuery();
+                            deleted = sqlCmd_deleteText.ExecuteNonQuery();
+                            //Delete Items from Zip
+                            var scriptFile = zipFileTo.GetEntry("script/c" + cardItem.Code + ".lua");
+                            var picFile = zipFileTo.GetEntry("pics/" + cardItem.Code + ".pic");
+                            if (scriptFile != null) scriptFile.Delete();
+                            if (picFile != null) picFile.Delete();
+
+                            sqlCmd_deleteData.Dispose();
+                            sqlCmd_deleteText.Dispose();
+                        }
+                    }
+                }
+
+                //Create Expansion
+                if (TableTo != null) TableTo.Dispose();
+                TableTo = OpenDatabase(sqlConn, toFilePath);
+
+                //Clear or Create new 'changesTo' List
+                InitializeChangesList();
+
+                hasChanges = false;
+                //Close Connection
+                sqlConn.Close();
+            }
         }
 
         private static Expansion OpenDatabase(SQLiteConnection sqlConn, string filePath)
@@ -236,6 +297,12 @@ namespace YGOPro_Expansion_Manager
             sqlCmd.Dispose();
 
             return Loaded;
+        }
+
+        private static string GetZipFilePath(string databasePath)
+        {
+            int startOfExtension = databasePath.Length - 4;
+            return databasePath.Remove(startOfExtension, 4).Insert(startOfExtension, ".zip");
         }
         #endregion
 
@@ -429,9 +496,8 @@ namespace YGOPro_Expansion_Manager
             ///Card Text
             ///</summary>
 
-            int startOfExtension = databasePath.Length - 4;
-            string zipFileName = databasePath.Remove(startOfExtension, 4).Insert(startOfExtension, ".zip");
-
+            //Get Zip File Path
+            string zipFileName = GetZipFilePath(databasePath);
 
             //if (Image_SelCard.Source != null) Image_SelCard.Source;
             using (var zipFile = ZipFile.OpenRead(zipFileName))
@@ -456,7 +522,6 @@ namespace YGOPro_Expansion_Manager
                     }
                 }
             }
-            Console.WriteLine("Completed");
         }
         #endregion
     }
