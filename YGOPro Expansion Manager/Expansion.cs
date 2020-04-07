@@ -172,13 +172,20 @@ namespace YGOPro_Expansion_Manager
 
         public int CompareTo(CardItem other)
         {
-            if (other.IsNew == this.IsNew)
+            if (other.IsNew != this.IsNew)
             {
-                return other.IsDeleted.CompareTo(this.IsDeleted);
+                //Changed cards at the top
+                return other.IsNew.CompareTo(this.IsNew); //Sort Descending
+            }
+            else if (other.IsDeleted != this.IsDeleted)
+            {
+                //Deleted cards at the top
+                return other.IsDeleted.CompareTo(this.IsDeleted); //Sort Descending
             }
             else
             {
-                return other.IsNew.CompareTo(this.IsNew);
+                //Sort by Card Code
+                return this.Code.CompareTo(other.Code); //Sort Ascending
             }
         }
 

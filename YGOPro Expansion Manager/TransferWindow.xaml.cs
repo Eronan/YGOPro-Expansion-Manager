@@ -7,20 +7,24 @@ using System.Linq;
 using WinForms = System.Windows.Forms;
 using System;
 using System.IO;
+using System.ComponentModel;
+using System.Windows.Media;
 
 namespace YGOPro_Expansion_Manager
 {
     /// <summary>
     /// Interaction logic for TransferWindow.xaml
     /// </summary>
-    public partial class TransferWindow : Window
+    public partial class TransferWindow : Window, INotifyPropertyChanged
     {
+        //Prevent Loading New Database
         bool hasChanges = false;
+
+        //Expansion LIsts
         Expansion TableTo;
         Expansion TableFrom;
         List<CardItem> changesTo = new List<CardItem>();
         List<CardItem> listFrom = new List<CardItem>();
-        
 
         public TransferWindow()
         {
@@ -34,11 +38,15 @@ namespace YGOPro_Expansion_Manager
             using (WinForms.SaveFileDialog saveDialog = new WinForms.SaveFileDialog())
             {
                 saveDialog.InitialDirectory = Properties.Settings.Default.Expansions;
+                saveDialog.Filter = "Card Database (*.cdb)|*.cdb";
                 if (saveDialog.ShowDialog() == WinForms.DialogResult.OK)
                 {
                     string filePath = saveDialog.FileName;
+                    //Save Settings
                     Properties.Settings.Default.Expansions = Path.GetDirectoryName(filePath);
                     Properties.Settings.Default.Save();
+                    //Show Database Name
+                    Label_DatabaseTo.Text = Path.GetFileName(filePath);
 
                     SQLiteConnection.CreateFile(filePath);
                     using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
@@ -80,12 +88,18 @@ namespace YGOPro_Expansion_Manager
         {
             using (WinForms.OpenFileDialog openDialog = new WinForms.OpenFileDialog())
             {
+                //Set Up OpenFileDialog
                 openDialog.InitialDirectory = Properties.Settings.Default.Expansions;
+                openDialog.Filter = "Card Database (*.cdb)|*.cdb";
+                //Open FileDialog
                 if (openDialog.ShowDialog() == WinForms.DialogResult.OK)
                 {
                     string filePath = openDialog.FileName;
+                    //Save Settings
                     Properties.Settings.Default.Expansions = Path.GetDirectoryName(filePath);
                     Properties.Settings.Default.Save();
+                    //Show Database Name
+                    Label_DatabaseTo.Text = Path.GetFileName(filePath);
 
                     //Open Database
                     using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
@@ -165,18 +179,25 @@ namespace YGOPro_Expansion_Manager
             //Prevent Loading new Database if changes exist
             if (hasChanges)
             {
-                MessageBox.Show("Please save changes before Loading a new Database",
+                MessageBox.Show("Please save or cancel changes before Loading a new Database.",
                     "Please Save Changes", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+            //Use Winforms' OpenFileDialog
             using (WinForms.OpenFileDialog openDialog = new WinForms.OpenFileDialog())
             {
+                //Set Up OpenFileDialog
                 openDialog.InitialDirectory = Properties.Settings.Default.Path;
+                openDialog.Filter = "Card Database (*.cdb)|*.cdb";
+                //Open FileDialog
                 if (openDialog.ShowDialog() == WinForms.DialogResult.OK)
                 {
                     string filePath = openDialog.FileName;
+                    //Save Settings
                     Properties.Settings.Default.Path = Path.GetDirectoryName(filePath);
                     Properties.Settings.Default.Save();
+                    //Show Database Name
+                    Label_DatabaseFrom.Text = Path.GetFileName(filePath);
 
                     //Open Database
                     using (SQLiteConnection sqlConn = new SQLiteConnection("Data Source=" + filePath + ";"))
@@ -208,7 +229,11 @@ namespace YGOPro_Expansion_Manager
             //Get Selected Item
             CardItem selectedCard = (CardItem) ListBox_TransTo.SelectedItem;
             //Remove from List if it is not already in Database Originally
-            if (!selectedCard.IsOriginal) changesTo.Remove(selectedCard);
+            if (!selectedCard.IsOriginal)
+            {
+                changesTo.Remove(selectedCard);
+                selectedCard.IsNew = false;
+            }
             else selectedCard.IsDeleted = true;
             //Prevent Loading new Database
             SortListChanged();
@@ -217,64 +242,80 @@ namespace YGOPro_Expansion_Manager
         private void Button_Transfer_Click(object sender, RoutedEventArgs e)
         {
             //Check if Database has been Opened (Initialized)
-            if (changesTo.Count > 0)
+            if (changesTo.Count == 0)
             {
-                if (ListBox_TransFrom.SelectedItem != null)
+                MessageBox.Show("There is no database opened.",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            //Make Sure Item is Selected
+            if (ListBox_TransFrom.SelectedItem == null) return;
+
+            //Add New Card to Changes
+            CardItem selectedCard = (CardItem)ListBox_TransFrom.SelectedItem;
+            int index = changesTo.FindIndex(item => item.Code == selectedCard.Code);
+            //Determine whether to Update or Add card
+            if (index != -1)
+            {
+                if (!changesTo[index].IsNew)
                 {
-                    //Add New Card to Changes
-                    CardItem selectedCard = (CardItem)ListBox_TransFrom.SelectedItem;
-                    int index = changesTo.FindIndex(item => item.Code == selectedCard.Code);
-
-                    if (index != -1)
-                    {
-                        //Set the Change as Replacement IsNew = true & IsDeleted = true
-                        changesTo[index].IsNew = true;
-                        changesTo[index].IsDeleted = true;
-                    }
-                    else changesTo.Add(selectedCard); //Add New Card to List
-
-                    //Refresh List
-                    SortListChanged();
+                    //Set the Change as Replacement IsNew = true & IsDeleted = true
+                    changesTo[index].IsNew = true;
+                    changesTo[index].IsDeleted = true;
                 }
             }
             else
             {
-                MessageBox.Show("There is no database opened.",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                changesTo.Add(selectedCard); //Add New Card to List
+                ListBox_TransTo.Items.Refresh();
+                selectedCard.IsNew = true;
             }
+
+            //Refresh List
+            SortListChanged();
         }
 
         private void Button_TransferAll_Click(object sender, RoutedEventArgs e)
         {
-            //Check if Database has been Opened (Initialized)
-            if (changesTo.Count > 0)
-            {
-                //Add New Card to Changes
-                foreach (CardItem card in listFrom)
-                {
-                    int index = changesTo.FindIndex(item => item.Code == card.Code);
 
-                    if (index != -1)
+            //Check if Database has been Opened (Initialized)
+            if (changesTo.Count == 0)
+            {
+                MessageBox.Show("There is no database opened.",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+
+            //Add New Card to Changes
+            foreach (CardItem card in listFrom)
+            {
+                int index = changesTo.FindIndex(item => item.Code == card.Code);
+
+                if (index != -1)
+                {
+                    if (!changesTo[index].IsNew)
                     {
                         //Set the Change as Replacement IsNew = true & IsDeleted = true
                         changesTo[index].IsNew = true;
                         changesTo[index].IsDeleted = true;
                     }
-                    else changesTo.Add(card); //Add New Card to List
-
-                    //Refresh List
+                }
+                else
+                {
+                    changesTo.Add(card); //Add New Card to List
                     ListBox_TransTo.Items.Refresh();
+                    card.IsNew = true;
                 }
 
-                //Refresh Lists
-                ListBox_TransFrom.Items.Refresh(); ;
-                //Prevent Loading new Database
-                SortListChanged();
-            } else
-            {
-                MessageBox.Show("There is no database opened.",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                //Refresh List
+                ListBox_TransTo.Items.Refresh();
             }
+
+            //Refresh Lists
+            ListBox_TransFrom.Items.Refresh(); ;
+            //Prevent Loading new Database
+            SortListChanged();
         }
 
         private void Button_Cancel_Click(object sender, RoutedEventArgs e)
@@ -295,5 +336,60 @@ namespace YGOPro_Expansion_Manager
             }
             hasChanges = false;
         }
+
+        #region FilterFunctions
+        private void TextBox_FilterTo_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            //ListBox_TransTo.Items.Filter = new Predicate<object>();
+            if (ListBox_TransTo == null || ListBox_TransTo.Items == null) return;
+            ListBox_TransTo.Items.Filter = FilterToFunc;
+        }
+
+        private bool FilterToFunc(object arg)
+        {
+            CardItem card = (CardItem)arg;
+            return (card.Name.Contains(SearchBox_NameTo.Text) || SearchBox_NameTo.Foreground != Brushes.Black)
+                && (card.Code.ToString().Contains(SearchBox_CodeTo.Text) || SearchBox_CodeTo.Foreground != Brushes.Black);
+        }
+
+        private void SearchBox_IsKeyboardFocusedChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            System.Windows.Controls.TextBox searchBox = (System.Windows.Controls.TextBox)sender;
+            if (searchBox.IsKeyboardFocused)
+            {
+                if (searchBox.Foreground == Brushes.LightGray)
+                {
+                    searchBox.Text = "";
+                    searchBox.Foreground = Brushes.Black;
+                }
+            }
+            else
+            {
+                if (searchBox.Foreground == Brushes.Black && searchBox.Text == "")
+                {
+                    searchBox.Text = searchBox.Tag.ToString();
+                    searchBox.Foreground = Brushes.LightGray;
+                }
+            }
+
+        }
+        #endregion
+
+        #region INotifyPropertyChanged Members
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected virtual void OnPropertyChanged(string propertyName, object sender)
+        {
+            if (PropertyChanged != null) PropertyChanged(sender, new PropertyChangedEventArgs(propertyName));
+        }
+
+        #endregion
     }
 }
