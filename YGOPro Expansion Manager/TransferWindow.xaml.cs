@@ -9,13 +9,15 @@ using System;
 using System.IO;
 using System.ComponentModel;
 using System.Windows.Media;
+using System.IO.Compression;
+using System.Windows.Media.Imaging;
 
 namespace YGOPro_Expansion_Manager
 {
     /// <summary>
     /// Interaction logic for TransferWindow.xaml
     /// </summary>
-    public partial class TransferWindow : Window, INotifyPropertyChanged
+    public partial class TransferWindow : Window
     {
         //Prevent Loading New Database
         bool hasChanges = false;
@@ -26,12 +28,45 @@ namespace YGOPro_Expansion_Manager
         List<CardItem> changesTo = new List<CardItem>();
         List<CardItem> listFrom = new List<CardItem>();
 
+        //Global Variables
+        string fromFilePath;
+        string toFilePath;
+        System.Drawing.Image currentSource;
+        BitmapImage imageStream;
+
         public TransferWindow()
         {
             InitializeComponent();
             ListBox_TransTo.ItemsSource = changesTo;
+            imageStream = new BitmapImage();
         }
 
+        //Clear/Create New 'changesTo' List
+        private void InitializeChangesList()
+        {
+            //Clear Changes
+            changesTo.Clear();
+
+            //Add Card List to Changes
+            foreach (DataRow dr in TableTo.Text.Rows)
+            {
+                //Add Cards to List as "Original"
+                changesTo.Add(new CardItem(Convert.ToInt64(dr["id"]), dr["name"].ToString()));
+            }
+            ListBox_TransTo.Items.Refresh();
+        }
+
+        private void SortListChanged()
+        {
+            //Sort List
+            changesTo.Sort();
+            //Refresh List
+            ListBox_TransTo.Items.Refresh();
+            //Prevent Loading new Database
+            hasChanges = true;
+        }
+
+        #region Commands
         private void Command_Create_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             //Use Winforms' SaveFile Dialog
@@ -42,6 +77,7 @@ namespace YGOPro_Expansion_Manager
                 if (saveDialog.ShowDialog() == WinForms.DialogResult.OK)
                 {
                     string filePath = saveDialog.FileName;
+                    toFilePath = filePath;
                     //Save Settings
                     Properties.Settings.Default.Expansions = Path.GetDirectoryName(filePath);
                     Properties.Settings.Default.Save();
@@ -95,6 +131,7 @@ namespace YGOPro_Expansion_Manager
                 if (openDialog.ShowDialog() == WinForms.DialogResult.OK)
                 {
                     string filePath = openDialog.FileName;
+                    toFilePath = filePath;
                     //Save Settings
                     Properties.Settings.Default.Expansions = Path.GetDirectoryName(filePath);
                     Properties.Settings.Default.Save();
@@ -122,58 +159,6 @@ namespace YGOPro_Expansion_Manager
             //Fill ListBox with items
         }
 
-        //Clear/Create New 'changesTo' List
-        private void InitializeChangesList()
-        {
-            //Clear Changes
-            changesTo.Clear();
-
-            //Add Card List to Changes
-            foreach (DataRow dr in TableTo.Text.Rows)
-            {
-                //Add Cards to List as "Original"
-                changesTo.Add(new CardItem(Convert.ToInt64(dr["id"]), dr["name"].ToString()));
-            }
-            ListBox_TransTo.Items.Refresh();
-        }
-
-        private static Expansion OpenDatabase(SQLiteConnection sqlConn, string filePath)
-        {
-            DataSet expansionSet = new DataSet();
-
-            //Read from 'data' table
-            SQLiteCommand sqlCmd = new SQLiteCommand("Select * from datas", sqlConn);
-            SQLiteDataAdapter sqlAdapter = new SQLiteDataAdapter(sqlCmd);
-            sqlAdapter.Fill(expansionSet, "datas");
-
-            //Read from 'text' table
-            sqlAdapter.SelectCommand.CommandText = "Select * from texts";
-            sqlAdapter.Fill(expansionSet, "texts");
-
-            //Create new Expansion Class
-            Expansion Loaded = new Expansion(filePath, expansionSet);
-
-            sqlAdapter.Dispose();
-            sqlCmd.Dispose();
-
-            return Loaded;
-        }
-
-        private void SortListChanged()
-        {
-            //Sort List
-            changesTo.Sort();
-            //Refresh List
-            ListBox_TransTo.Items.Refresh();
-            //Prevent Loading new Database
-            hasChanges = true;
-        }
-
-        private void Command_Save_Executed(object sender, ExecutedRoutedEventArgs e)
-        {
-
-        }
-
         private void Command_Load_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             //Prevent Loading new Database if changes exist
@@ -193,6 +178,7 @@ namespace YGOPro_Expansion_Manager
                 if (openDialog.ShowDialog() == WinForms.DialogResult.OK)
                 {
                     string filePath = openDialog.FileName;
+                    fromFilePath = filePath;
                     //Save Settings
                     Properties.Settings.Default.Path = Path.GetDirectoryName(filePath);
                     Properties.Settings.Default.Save();
@@ -217,6 +203,7 @@ namespace YGOPro_Expansion_Manager
                         }
 
                         ListBox_TransFrom.ItemsSource = listFrom;
+                        ListBox_TransFrom.Items.Refresh();
                     }
                 }
             }
@@ -224,6 +211,35 @@ namespace YGOPro_Expansion_Manager
             //Fill ListBox with items
         }
 
+        private void Command_Save_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            
+        }
+
+        private static Expansion OpenDatabase(SQLiteConnection sqlConn, string filePath)
+        {
+            DataSet expansionSet = new DataSet();
+
+            //Read from 'data' table
+            SQLiteCommand sqlCmd = new SQLiteCommand("Select * from datas", sqlConn);
+            SQLiteDataAdapter sqlAdapter = new SQLiteDataAdapter(sqlCmd);
+            sqlAdapter.Fill(expansionSet, "datas");
+
+            //Read from 'text' table
+            sqlAdapter.SelectCommand.CommandText = "Select * from texts";
+            sqlAdapter.Fill(expansionSet, "texts");
+
+            //Create new Expansion Class
+            Expansion Loaded = new Expansion(filePath, expansionSet);
+
+            sqlAdapter.Dispose();
+            sqlCmd.Dispose();
+
+            return Loaded;
+        }
+        #endregion
+
+        #region Buttons
         private void Button_Delete_Click(object sender, RoutedEventArgs e)
         {
             //Get Selected Item
@@ -338,6 +354,7 @@ namespace YGOPro_Expansion_Manager
             }
             hasChanges = false;
         }
+        #endregion
 
         #region FilterFunctions
         private void TextBox_FilterTo_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
@@ -388,21 +405,59 @@ namespace YGOPro_Expansion_Manager
         }
         #endregion
 
-        #region INotifyPropertyChanged Members
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-
-        protected virtual void OnPropertyChanged(string propertyName)
+        #region CardInformation Functions
+        private void ListBox_TransTo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            if (ListBox_TransTo.SelectedItem == null) return;
+            CardItem selectedCard = (CardItem)ListBox_TransTo.SelectedItem;
+            if (selectedCard.IsNew) LoadFromCard(selectedCard, fromFilePath);
+            else LoadFromCard(selectedCard, toFilePath);
         }
 
-        protected virtual void OnPropertyChanged(string propertyName, object sender)
+        private void ListBox_TransFrom_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (PropertyChanged != null) PropertyChanged(sender, new PropertyChangedEventArgs(propertyName));
+            if (ListBox_TransFrom.SelectedItem == null) return;
+            LoadFromCard((CardItem)ListBox_TransFrom.SelectedItem, fromFilePath);
         }
 
+        
+        private void LoadFromCard(CardItem card, string databasePath)
+        {
+            ///<summary>
+            ///[Card Types?] Monster Type?/Attribute?
+            ///[Level] ATK/DEF PendScaleL/PendScaleR
+            ///Card Text
+            ///</summary>
+
+            int startOfExtension = databasePath.Length - 4;
+            string zipFileName = databasePath.Remove(startOfExtension, 4).Insert(startOfExtension, ".zip");
+
+
+            //if (Image_SelCard.Source != null) Image_SelCard.Source;
+            using (var zipFile = ZipFile.OpenRead(zipFileName))
+            {
+                var picEntry = zipFile.GetEntry("pics/" + card.Code + ".jpg");
+                if (picEntry != null)
+                {
+                    using (var zipStream = picEntry.Open())
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        if (Image_SelCard.Source != null) ((BitmapImage)Image_SelCard.Source).StreamSource.Close();
+                        zipStream.CopyTo(memoryStream); // here
+                        memoryStream.Position = 0;
+
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.StreamSource = memoryStream;
+                        bitmap.EndInit();
+
+                        Image_SelCard.Source = bitmap;
+                    }
+                }
+            }
+            Console.WriteLine("Completed");
+        }
         #endregion
     }
 }

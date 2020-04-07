@@ -93,7 +93,8 @@
                  TextChanged="TextBox_FilterTo_TextChanged" IsKeyboardFocusedChanged="SearchBox_IsKeyboardFocusedChanged"/>
         <TextBox Name="SearchBox_CodeTo" Height="23" Margin="10,93.2,9.4,0" Grid.Row="1" VerticalAlignment="Top" Text="Code" Tag="Code" Foreground="LightGray"
                  TextChanged="TextBox_FilterTo_TextChanged" IsKeyboardFocusedChanged="SearchBox_IsKeyboardFocusedChanged"/>
-        <ListBox x:Name="ListBox_TransTo" Grid.Column="0" Margin="10,121.2,9.4,10" Grid.Row="1" ItemTemplate="{StaticResource ListBoxTemplate}" />
+        <ListBox x:Name="ListBox_TransTo" Grid.Column="0" Margin="10,121.2,9.4,10" Grid.Row="1" ItemTemplate="{StaticResource ListBoxTemplate}"
+                SelectionChanged="ListBox_TransTo_SelectionChanged"/>
         <Button x:Name="Button_Transfer" Content="◀ Transfer" Grid.Column="1" Margin="10.6,49.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"
                 Click="Button_Transfer_Click"/>
         <Button x:Name="Button_TransferAll" Content="◀◀ Transfer All" Grid.Column="1" Margin="10.6,73.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"
@@ -108,11 +109,12 @@
                  IsKeyboardFocusedChanged="SearchBox_IsKeyboardFocusedChanged" TextChanged="TextBox_FilterFrom_TextChanged"/>
         <TextBox Name="SearchBox_CodeFrom" Height="23" Margin="10.4,93.2,5.2,0" Grid.Row="1" Grid.Column="2" VerticalAlignment="Top" Text="Code" Foreground="LightGray" Tag="Code"
                  IsKeyboardFocusedChanged="SearchBox_IsKeyboardFocusedChanged" TextChanged="TextBox_FilterFrom_TextChanged"/>
-        <ListBox x:Name="ListBox_TransFrom" Margin="10.4,121.2,5.2,10" Grid.Column="2" Grid.Row="1" ItemTemplate="{StaticResource ListBoxTemplate}"/>
-        <Border Background="#FFF1F1F1" Grid.Column="3" Margin="54.7,9.2,54.7,211" CornerRadius="3" Grid.Row="1" Height="215.2" Width="148.8" VerticalAlignment="Top">
-            <Image Grid.Column="3" Grid.Row="1" IsEnabled="False" Margin="0,0,0,0"/>
+        <ListBox x:Name="ListBox_TransFrom" Margin="10.4,121.2,5.2,10" Grid.Column="2" Grid.Row="1" ItemTemplate="{StaticResource ListBoxTemplate}"
+                 SelectionChanged="ListBox_TransFrom_SelectionChanged"/>
+        <Border Background="#FFF1F1F1" Grid.Column="3" Margin="9.8,9.2,9.6,0" CornerRadius="3" Grid.Row="1" Height="345" VerticalAlignment="Top">
+            <Image Name="Image_SelCard" Grid.Column="3" Grid.Row="1" IsEnabled="False" Margin="0,0,0,0" />
         </Border>
-        <TextBox Grid.Column="3" Margin="9.8,229.2,9.8,10" TextWrapping="Wrap" IsReadOnly="True" IsEnabled="False" Grid.Row="1"/>
+        <TextBox Grid.Column="3" Margin="9.8,229.2,9.8,10" TextWrapping="Wrap" IsReadOnly="True" IsEnabled="False" Grid.Row="1" Visibility="Hidden"/>
         <Menu Grid.ColumnSpan="4" Margin="0,0,-0.4,435" Grid.RowSpan="2" MinHeight="25" MaxHeight="25" VerticalAlignment="Top">
             <MenuItem Header="File">
                 <MenuItem Header="New Database" Command="New" />
