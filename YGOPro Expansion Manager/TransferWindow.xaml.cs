@@ -554,7 +554,10 @@ namespace YGOPro_Expansion_Manager
 
         private void MenuItem_About_Click(object sender, RoutedEventArgs e)
         {
-
+            MessageBox.Show("YGOPro Expansion Manager\n" + 
+                "Creator: Eronan\n" + 
+                "Version: 2.0.0\n",
+                "About", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         #endregion
 
