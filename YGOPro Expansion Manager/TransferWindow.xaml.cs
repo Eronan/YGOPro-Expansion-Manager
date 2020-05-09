@@ -250,10 +250,97 @@ namespace YGOPro_Expansion_Manager
                 {
                     sqlConn.Open();
 
-                    int startOfExtension = toFilePath.Length - 4;
+                    //int startOfExtension = toFilePath.Length - 4;
 
-                    //Set Up Zip File Connection to "To Zip File"
-                    using (var zipFileTo = ZipFile.Open(GetZipFilePath(toFilePath), ZipArchiveMode.Update))
+                    if (CheckBox_SaveZip.IsChecked == true)
+                    {
+                        //Set Up Zip File Connection to "To Zip File"
+                        using (var zipFileTo = ZipFile.Open(GetZipFilePath(toFilePath), ZipArchiveMode.Update))
+                        {
+                            foreach (CardItem cardItem in changesTo)
+                            {
+                                if (cardItem.IsNew)
+                                {
+                                    //Set Up Zip File Connection to "From Zip File"
+                                    if (cardItem.IsOriginal)
+                                    {
+                                        //Update Row in Table
+                                        //Commands
+                                        SQLiteCommand sqlCmd_updateData = new SQLiteCommand("UPDATE datas " +
+                                            "SET ot=@format, alias=@alias, setcode=@setcode, type=@type, atk=@atk, def=@def, " +
+                                            "level=@level, race=@race, attribute=@attribute, category=@category " +
+                                            "WHERE id=@code", sqlConn);
+                                        SQLiteCommand sqlCmd_updateText = new SQLiteCommand("UPDATE texts " +
+                                            "SET name=@name, desc=@desc, " +
+                                            "str1=@str1, str2=@str2, str3=@str3, str4=@str4, str5=@str5, str6=@str6, " +
+                                            "str7=@str7, str8=@str8, str9=@str9, str10=@str10, str11=@str11, str12=@str12, " +
+                                            "str13=@str13, str14=@str14, str15=@str15, str16=@str16 " +
+                                            "WHERE id=@code", sqlConn);
+
+                                        //Initialize Parameters
+                                        AddParametersFromExpansion(sqlCmd_updateData, sqlCmd_updateText, TableFrom, cardItem.Code);
+
+                                        //Execute
+                                        sqlCmd_updateData.ExecuteNonQuery();
+                                        sqlCmd_updateText.ExecuteNonQuery();
+
+                                        //Images and Scripts
+                                        DeleteFilesFromZipArchive(zipFileTo, cardItem.Code, saveErrors);
+                                        MoveFilesToZip(zipFileTo, cardItem.Code, saveErrors);
+
+                                        sqlCmd_updateData.Dispose();
+                                        sqlCmd_updateText.Dispose();
+                                    }
+                                    else
+                                    {
+                                        //Insert Row in Table
+                                        SQLiteCommand sqlCmd_insertData = new SQLiteCommand("INSERT INTO datas (id , ot, alias, " +
+                                            "setcode, type, atk, def, level, race, attribute, category) " +
+                                            "VALUES (@code, @format, @alias, @setcode, @type, @atk, @def, " +
+                                            "@level, @race, @attribute, @category)", sqlConn);
+                                        SQLiteCommand sqlCmd_insertText = new SQLiteCommand("INSERT INTO texts (id, name, desc, " +
+                                            "str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, " +
+                                            "str13, str14, str15, str16) " +
+                                            "VALUES (@code, @name, @desc, " +
+                                            "@str1, @str2, @str3, @str4, @str5, @str6, @str7, @str8, @str9, @str10, @str11, @str12, " +
+                                            "@str13, @str14, @str15, @str16)", sqlConn);
+
+                                        //Instantiate Parameters
+                                        AddParametersFromExpansion(sqlCmd_insertData, sqlCmd_insertText, TableFrom, cardItem.Code);
+
+                                        //Execute
+                                        sqlCmd_insertData.ExecuteNonQuery();
+                                        sqlCmd_insertText.ExecuteNonQuery();
+
+                                        //Images and Scripts
+                                        DeleteFilesFromZipArchive(zipFileTo, cardItem.Code, saveErrors, true);    //Delete If Necessary
+                                        MoveFilesToZip(zipFileTo, cardItem.Code, saveErrors);  //Move
+
+                                        sqlCmd_insertData.Dispose();
+                                        sqlCmd_insertText.Dispose();
+                                    }
+                                }
+                                else if (cardItem.IsDeleted)
+                                {
+                                    //Delete Row from Table
+                                    SQLiteCommand sqlCmd_deleteData = new SQLiteCommand("DELETE FROM datas WHERE id=@code", sqlConn);
+                                    SQLiteCommand sqlCmd_deleteText = new SQLiteCommand("DELETE FROM texts WHERE id=@code", sqlConn);
+                                    sqlCmd_deleteData.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
+                                    sqlCmd_deleteText.Parameters.Add("@code", DbType.Int64).Value = cardItem.Code;
+
+                                    sqlCmd_deleteData.ExecuteNonQuery();
+                                    sqlCmd_deleteText.ExecuteNonQuery();
+
+                                    //Delete Files
+                                    DeleteFilesFromZipArchive(zipFileTo, cardItem.Code, saveErrors);
+
+                                    sqlCmd_deleteData.Dispose();
+                                    sqlCmd_deleteText.Dispose();
+                                }
+                            }
+                        }
+                    }
+                    else if (CheckBox_SaveZip.IsChecked == false)
                     {
                         foreach (CardItem cardItem in changesTo)
                         {
@@ -283,8 +370,8 @@ namespace YGOPro_Expansion_Manager
                                     sqlCmd_updateText.ExecuteNonQuery();
 
                                     //Images and Scripts
-                                    DeleteFilesFromZipArchive(zipFileTo, cardItem.Code, saveErrors);
-                                    MoveFilesToZip(zipFileTo, cardItem.Code, saveErrors);
+                                    DeleteFiles(cardItem.Code, saveErrors); //Delete if Necessary
+                                    CopyFiles(cardItem.Code, saveErrors);
 
                                     sqlCmd_updateData.Dispose();
                                     sqlCmd_updateText.Dispose();
@@ -311,8 +398,8 @@ namespace YGOPro_Expansion_Manager
                                     sqlCmd_insertText.ExecuteNonQuery();
 
                                     //Images and Scripts
-                                    DeleteFilesFromZipArchive(zipFileTo, cardItem.Code, saveErrors, true);    //Delete If Necessary
-                                    MoveFilesToZip(zipFileTo, cardItem.Code, saveErrors);  //Move
+                                    DeleteFiles(cardItem.Code, saveErrors); //Delete if Necessary
+                                    CopyFiles(cardItem.Code, saveErrors);
 
                                     sqlCmd_insertData.Dispose();
                                     sqlCmd_insertText.Dispose();
@@ -330,7 +417,7 @@ namespace YGOPro_Expansion_Manager
                                 sqlCmd_deleteText.ExecuteNonQuery();
 
                                 //Delete Files
-                                DeleteFilesFromZipArchive(zipFileTo, cardItem.Code, saveErrors);
+                                DeleteFiles(cardItem.Code, saveErrors);
 
                                 sqlCmd_deleteData.Dispose();
                                 sqlCmd_deleteText.Dispose();
@@ -369,6 +456,57 @@ namespace YGOPro_Expansion_Manager
             }
         }
 
+        private void CopyFiles(long code, List<UserError> errorList)
+        {
+            //Get Paths
+            string scriptPath = "script/c" + code + ".lua";
+            string picsPath = "pics/" + code + ".jpg";
+            string fromDirectory = Path.GetDirectoryName(fromFilePath) + "\\";
+
+            string toDirectory = Path.GetDirectoryName(toFilePath) + "\\";
+
+            ZipArchive archiveFrom = null;
+            if (File.Exists(GetZipFilePath(fromFilePath)))
+            {
+                archiveFrom = ZipFile.Open(GetZipFilePath(fromFilePath), ZipArchiveMode.Read);
+            }
+
+            //Script File
+            if (File.Exists(fromDirectory + scriptPath))
+            {
+                File.Copy(fromDirectory + scriptPath, toDirectory + scriptPath);//archiveTo.CreateEntryFromFile(directory + scriptPath, scriptPath);
+            }
+            else if (archiveFrom != null && archiveFrom.GetEntry(scriptPath) != null)
+            {
+                //Create Streams
+                ZipFile.ExtractToDirectory(scriptPath, toDirectory + scriptPath);
+            }
+            else
+            {
+                errorList.Add(new UserError(scriptPath + " could not be added because it was not found in " +
+                    GetZipFilePath(fromFilePath) + " or \"" + fromDirectory + "\\scripts\\\"", this.Title,
+                    MethodBase.GetCurrentMethod(), ErrorType.Warning));
+            }
+
+            //Picture File
+            if (File.Exists(fromDirectory + picsPath))
+            {
+                File.Copy(fromDirectory + picsPath, toDirectory + picsPath);
+            }
+            else if (archiveFrom != null && archiveFrom.GetEntry(picsPath) != null)
+            {
+                ZipFile.ExtractToDirectory(picsPath, toDirectory + picsPath);
+            }
+            else
+            {
+                errorList.Add(new UserError(picsPath + " could not be added because it was not found in " +
+                    GetZipFilePath(fromFilePath) + " or \"" + fromDirectory + "\\pics\\\"", this.Title,
+                    MethodBase.GetCurrentMethod(), ErrorType.Warning));
+            }
+
+            if (archiveFrom != null) archiveFrom.Dispose();
+        }
+
         private void MoveFilesToZip(ZipArchive archiveTo, long code, List<UserError> errorList)
         {
             //Get Paths
@@ -378,7 +516,7 @@ namespace YGOPro_Expansion_Manager
 
             ZipArchive archiveFrom = null;
             if (File.Exists(GetZipFilePath(fromFilePath))) {
-                ZipFile.Open(GetZipFilePath(fromFilePath), ZipArchiveMode.Read);
+                archiveFrom = ZipFile.Open(GetZipFilePath(fromFilePath), ZipArchiveMode.Read);
             }
 
             //Script File
@@ -468,10 +606,40 @@ namespace YGOPro_Expansion_Manager
             else if (!suppressErrors) errorList.Add(new UserError(scriptFile + " could not be deleted because it was not found in " + GetZipFilePath(toFilePath),
                 this.Title, MethodBase.GetCurrentMethod(), ErrorType.Warning));
             if (picFile != null) picFile.Delete();
-            else if (!suppressErrors) errorList.Add(new UserError(scriptFile + " could not be deleted because it was not found in " + GetZipFilePath(toFilePath),
+            else if (!suppressErrors) errorList.Add(new UserError(picFile + " could not be deleted because it was not found in " + GetZipFilePath(toFilePath),
                 this.Title, MethodBase.GetCurrentMethod(), ErrorType.Warning));
 
             return scriptFile != null || picFile != null;
+        }
+
+        private bool DeleteFiles(long code, List<UserError> errorList, bool suppressErrors = false)
+        {
+            //Get Paths
+            string scriptPath = "script/c" + code + ".lua";
+            string picsPath = "pics/" + code + ".jpg";
+            string toDirectory = Path.GetDirectoryName(toFilePath) + "\\";
+
+            bool scriptDeleted = true;
+            bool picDeleted = true;
+
+            //Delete Script
+            if (File.Exists(toDirectory + scriptPath)) File.Delete(toDirectory + scriptPath);
+            else
+            {
+                scriptDeleted = false;
+                errorList.Add(new UserError(scriptPath + " could not be deleted because it was not found in \"" + toDirectory + "\"",
+                    this.Title, MethodBase.GetCurrentMethod(), ErrorType.Warning));
+            }
+
+            if (File.Exists(toDirectory + picsPath)) File.Delete(toDirectory + picsPath);
+            else
+            {
+                picDeleted = false;
+                errorList.Add(new UserError(picsPath + " could not be deleted because it was not found in \"" + toDirectory + "\"",
+                    this.Title, MethodBase.GetCurrentMethod(), ErrorType.Warning));
+            }
+
+            return picDeleted || scriptDeleted;
         }
 
         private static Expansion OpenDatabase(SQLiteConnection sqlConn, string filePath)

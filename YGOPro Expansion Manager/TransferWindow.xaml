@@ -103,6 +103,7 @@
                 Click="Button_Cancel_Click"/>
         <Button x:Name="Button_Delete" Content="🗙 Delete" Grid.Column="1" Margin="10.6,121.2,9.6,0" Grid.Row="1" Height="19" VerticalAlignment="Top"
                 Click="Button_Delete_Click"/>
+        <CheckBox x:Name="CheckBox_SaveZip" Content="Save Zip" Grid.Column="1" Margin="10.6,145.2,9.6,0" Grid.Row="1" VerticalAlignment="Top" IsChecked="True"/>
         <TextBlock Text="Transfer From:" Margin="10.4,9.2,0,400" Grid.Column="2" HorizontalAlignment="Left" Width="85" Grid.Row="1" TextWrapping="Wrap"/>
         <TextBlock Name="Label_DatabaseFrom" Text="*.cdb" Margin="0,9.2,5.2,400" Grid.Column="2" TextAlignment="Right" HorizontalAlignment="Right" Width="101" Grid.Row="1" TextWrapping="Wrap"/>
         <Button Content="Open Database" Margin="10.4,39.2,5.2,0" Grid.Row="1" VerticalAlignment="Top" Grid.Column="2" Height="19" Command="{StaticResource Load}" />
