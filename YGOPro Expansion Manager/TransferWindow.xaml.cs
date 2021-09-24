@@ -631,6 +631,7 @@ namespace YGOPro_Expansion_Manager
                     this.Title, MethodBase.GetCurrentMethod(), ErrorType.Warning));
             }
 
+            //Delete Picture
             if (File.Exists(toDirectory + picsPath)) File.Delete(toDirectory + picsPath);
             else
             {
