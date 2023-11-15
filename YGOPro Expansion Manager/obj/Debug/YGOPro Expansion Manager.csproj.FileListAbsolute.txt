@@ -1,7 +1,6 @@
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\YGOPro Expansion Manager.exe.config
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\YGOPro Expansion Manager.exe
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\bin\Debug\YGOPro Expansion Manager.pdb
-D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.csprojAssemblyReference.cache
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\App.g.cs
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager_MarkupCompile.cache
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager_MarkupCompile.lref
@@ -26,3 +25,4 @@ D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Man
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\GeneratedInternalTypeHelper.g.cs
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\ErrorList.g.cs
 D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\ErrorList.baml
+D:\Ernest's Folder\GitUpdate Repos\YGOPro Expansion Manager\YGOPro Expansion Manager\obj\Debug\YGOPro Expansion Manager.csproj.AssemblyReference.cache
